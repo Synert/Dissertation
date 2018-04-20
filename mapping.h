@@ -20,12 +20,15 @@ public:
 	float GetHeightMapValue(int face, int x, int y);
 	float GetHeightMapValueFloat(int face, float xCoordFloat, float yCoordFloat);
 	XMFLOAT3 GetColorMapValue(int face, int x, int y);
+	float GetWaterMapValue(int face, int x, int y);
+	float GetWaterMapValueFloat(int face, float xCoordFloat, float yCoordFloat);
 	int GetHeightMapRes();
 	bool IsBuilt();
 	bool IsBuilding();
 private:
 	//heightmap
 	float* h_map;
+	float* w_map;
 	XMFLOAT3* c_map;
 	int h_res;
 	bool h_built = false;

@@ -21,6 +21,7 @@
 #include "face.h"
 #include "planet.h"
 #include "maths.h"
+#include "mapping.h"
 
 using namespace noise;
 
@@ -124,4 +125,6 @@ private:
 	CameraClass* m_Camera;
 	Light* m_light;
 	int triCount;
+
+	Mapping* m_hiresMap;
 };

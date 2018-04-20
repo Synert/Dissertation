@@ -183,13 +183,21 @@ bool GraphicsClass::Render(TwBar* bar)
 	//get the sky colour of the closest planet
 
 	XMFLOAT4 tempCol = COL_BLACK;
+	Planet* closest = NULL;
 	for each(Planet* planet in m_planets)
 	{
 		if (planet->DrawSky(m_Camera->GetPosition()))
 		{
 			tempCol = planet->GetSky();
+			closest = planet;
 		}
 	}
+
+	if (closest != NULL)
+	{
+		//create the hires map here
+	}
+
 	m_Direct3D->BeginScene(tempCol);
 
 	// Generate the view matrix based on the camera's position.

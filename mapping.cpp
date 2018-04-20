@@ -22,14 +22,27 @@ void Mapping::CreateMaps(int _hres, float m_temp, XMFLOAT3 perlin)
 	h_res = _hres;
 	c_map = new XMFLOAT3[6 * h_res * h_res];
 	h_map = new float[6 * h_res * h_res];
+	w_map = new float[6 * h_res * h_res];
 
 	CreateHeightMap(m_temp, perlin);
 }
 
 void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin)
 {
-	module::Perlin myModule;
-	myModule.SetOctaveCount(10);
+	module::Perlin perlinModule, waterModule, terrainPicker;
+	module::RidgedMulti altModule;
+	module::Billow billowModule;
+	module::Blend myModule;
+	terrainPicker.SetFrequency(0.5f);
+	terrainPicker.SetPersistence(0.25f);
+	altModule.SetOctaveCount(7);
+	billowModule.SetOctaveCount(8);
+	perlinModule.SetOctaveCount(10);
+	waterModule.SetOctaveCount(5);
+	myModule.SetSourceModule(0, perlinModule);
+	myModule.SetSourceModule(1, altModule);
+	myModule.SetSourceModule(2, billowModule);
+	myModule.SetControlModule(terrainPicker);
 
 	float pScale = 0.75f;
 	XMFLOAT3 perlinScale = XMFLOAT3(pScale, pScale, pScale);
@@ -83,6 +96,10 @@ void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin)
 				double value = myModule.GetValue(coord.x, coord.y, coord.z);
 				value += 2.0f;
 				value /= 3.0f;
+
+				double waterValue = waterModule.GetValue(coord.x, coord.y, coord.z);
+				waterValue += 2.0f;
+				waterValue /= 3.0f;
 				//float value = tempX;
 
 				//now move that between 1 and 0.15
