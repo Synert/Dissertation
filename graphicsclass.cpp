@@ -113,8 +113,8 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, Cam
 
 		Planet::StarParam new_star;
 		new_star.pos = XMFLOAT3(0.0f, 0.0f, 95000.0f);
-		new_star.temperature = RandFloat(2000.0f, 10000.0f); //6000.0f;
-		new_star.radius = RandFloat(400000.0f, 10000000.0f); //700000.0f;
+		new_star.temperature = 6000.0f;
+		new_star.radius = 700000.0f;
 		new_planet->Initialize(XMFLOAT3(x, y, z), RandFloat(20.0f, 50.0f), XMFLOAT3(pX, pY, pZ), XMFLOAT4(sX, sY, sZ, 1.0f), m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), new_star);
 		m_planets.push_back(new_planet);
 	}

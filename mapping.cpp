@@ -44,9 +44,16 @@ void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin)
 	myModule.SetSourceModule(2, billowModule);
 	myModule.SetControlModule(terrainPicker);
 
+	XMFLOAT3 baseRock = XMFLOAT3(Maths::RandInt(20, 85), Maths::RandInt(10, 40), Maths::RandInt(10, 55));
+	XMFLOAT3 baseGrass = XMFLOAT3(Maths::RandInt(0, 35), Maths::RandInt(30, 80), Maths::RandInt(0, 50));
+
+	baseRock = Maths::ScalarFloat3(baseRock, 0.01f);
+	baseGrass = Maths::ScalarFloat3(baseGrass, 0.01f);
+
 	float pScale = 0.75f;
 	XMFLOAT3 perlinScale = XMFLOAT3(pScale, pScale, pScale);
-	float waterHeight = 0.30f;
+	float waterHeight = (float)Maths::RandInt(25, 40) / 100.0f;
+	//float waterHeight = 0.27f;
 
 	for (int z = 0; z < 6; z++)
 	{
@@ -100,7 +107,116 @@ void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin)
 				double waterValue = waterModule.GetValue(coord.x, coord.y, coord.z);
 				waterValue += 2.0f;
 				waterValue /= 3.0f;
+
+				waterValue *= (waterHeight * 1.5f);
+
+				bool desert = false;
+				if (!(m_temp < 373.2f && m_temp > 273.2f))
+				{
+					//waterValue = 0.0f;
+					//desert = true;
+				}
 				//float value = tempX;
+
+				value = 1.0f - value;
+
+				//choose the biome
+				Biome m_biome = BIOME_NONE;
+				if (value < 0.3f && !desert)
+				{
+					if (waterValue < 0.4f)
+					{
+						m_biome = BIOME_TUNDRA;
+					}
+					else m_biome = BIOME_SNOW;
+				}
+				else if (value < 0.65f)
+				{
+					if (waterValue < 0.2f)
+					{
+						m_biome = BIOME_DESERT_COLD;
+					}
+					else
+					{
+						if (value < 0.5f)
+						{
+							m_biome = BIOME_FOREST_BOREAL;
+						}
+						else
+						{
+							if (waterValue < 0.3f)
+							{
+								m_biome = BIOME_WOODLAND;
+							}
+							else if (waterValue < 0.6f)
+							{
+								m_biome = BIOME_FOREST_TEMPERATE_SEASONAL;
+							}
+							else
+							{
+								m_biome = BIOME_FOREST_TEMPERATE_RAIN;
+							}
+						}
+					}
+				}
+				else
+				{
+					if (waterValue < 0.3f)
+					{
+						m_biome = BIOME_DESERT_HOT;
+					}
+					else if (waterValue < 0.6f)
+					{
+						m_biome = BIOME_FOREST_TROPICAL_SEASONAL;
+					}
+					else
+					{
+						m_biome = BIOME_FOREST_TROPICAL_RAIN;
+					}
+				}
+
+				value = 1.0f - value;
+
+				XMFLOAT3 finalCol = XMFLOAT3(0.0f, 0.0f, 0.0f);
+
+				//m_biome = BIOME_NONE;
+
+				switch ((int)m_biome)
+				{
+				case BIOME_DESERT_COLD:
+					finalCol = XMFLOAT3(0.4f, 0.35f, 0.15f);
+					break;
+				case BIOME_DESERT_HOT:
+					finalCol = XMFLOAT3(0.45f, 0.25f, 0.1f);
+					break;
+				case BIOME_FOREST_BOREAL:
+					finalCol = XMFLOAT3(0.45f, 0.75f, 0.25f);
+					break;
+				case BIOME_FOREST_TEMPERATE_RAIN:
+					finalCol = XMFLOAT3(0.05f, 0.65f, 0.35f);
+					break;
+				case BIOME_FOREST_TEMPERATE_SEASONAL:
+					finalCol = XMFLOAT3(0.05f, 0.45f, 0.25f);
+					break;
+				case BIOME_FOREST_TROPICAL_RAIN:
+					finalCol = XMFLOAT3(0.05f, 0.4f, 0.1f);
+					break;
+				case BIOME_FOREST_TROPICAL_SEASONAL:
+					finalCol = XMFLOAT3(0.05f, 0.65f, 0.15f);
+					break;
+				case BIOME_SNOW:
+					//do thing
+					finalCol = XMFLOAT3(1.0f, 1.0f, 1.0f);
+					break;
+				case BIOME_TUNDRA:
+					finalCol = XMFLOAT3(0.55f, 0.50f, 0.4f);
+					break;
+				case BIOME_WOODLAND:
+					finalCol = XMFLOAT3(0.45f, 0.65f, 0.35f);
+					break;
+				}
+
+				finalCol = Maths::ScalarFloat3(finalCol, (value + 2.0f) / 2.0f);
 
 				//now move that between 1 and 0.15
 				float newValue = (float)value;
@@ -114,8 +230,9 @@ void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin)
 				if (newTemp < 0) newTemp = 0;
 				if (newTemp > 3000.0f) newTemp = 3000.0f;
 
-				XMFLOAT3 col = XMFLOAT3((3000.0f - newTemp) / 3000.0f, newTemp / 3000.0f, 0.0f);
-				col = XMFLOAT3((0.8f - value * 0.8f), (value * 0.7f), 0.5f);
+				//XMFLOAT3 col = XMFLOAT3((3000.0f - newTemp) / 3000.0f, newTemp / 3000.0f, 0.0f);
+				//col = XMFLOAT3((0.8f - value * 0.8f), (value * 0.7f), 0.5f);
+				XMFLOAT3 col = finalCol;
 
 				float waterColor = 0.0f;
 				float oldValue = newValue;
