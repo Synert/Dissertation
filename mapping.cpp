@@ -52,7 +52,7 @@ void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin)
 
 	float pScale = 0.75f;
 	XMFLOAT3 perlinScale = XMFLOAT3(pScale, pScale, pScale);
-	float waterHeight = (float)Maths::RandInt(25, 40) / 100.0f;
+	float waterHeight = (float)Maths::RandInt(25, 50) / 100.0f;
 	//float waterHeight = 0.27f;
 
 	for (int z = 0; z < 6; z++)
@@ -116,13 +116,18 @@ void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin)
 					//waterValue = 0.0f;
 					//desert = true;
 				}
+				if (m_temp > 373.2f)
+				{
+					waterValue *= (m_temp - 373.2f) / 2700.0f;
+				}
 				//float value = tempX;
 
-				value = 1.0f - value;
+				float tempValue = 1.0f - value;
+				tempValue += (m_temp - 273.2f) / 3000.0f;
 
 				//choose the biome
 				Biome m_biome = BIOME_NONE;
-				if (value < 0.3f && !desert)
+				if (tempValue < 0.3f && !desert)
 				{
 					if (waterValue < 0.4f)
 					{
@@ -130,7 +135,7 @@ void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin)
 					}
 					else m_biome = BIOME_SNOW;
 				}
-				else if (value < 0.65f)
+				else if (tempValue < 0.65f)
 				{
 					if (waterValue < 0.2f)
 					{
@@ -174,8 +179,6 @@ void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin)
 						m_biome = BIOME_FOREST_TROPICAL_RAIN;
 					}
 				}
-
-				value = 1.0f - value;
 
 				XMFLOAT3 finalCol = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
