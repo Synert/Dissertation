@@ -123,19 +123,23 @@ void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin)
 				//float value = tempX;
 
 				float tempValue = 1.0f - value;
-				tempValue += (m_temp - 273.2f) / 3000.0f;
+				tempValue += m_temp / 2700.0f;
+				if (m_temp <= 273.2f)
+				{
+					tempValue -= (273.2f - m_temp) / 500.0f;
+				}
 
 				//choose the biome
 				Biome m_biome = BIOME_NONE;
-				if (tempValue < 0.3f && !desert)
+				if (tempValue < 0.2f && !desert)
 				{
-					if (waterValue < 0.4f)
+					if (waterValue < 0.3f)
 					{
 						m_biome = BIOME_TUNDRA;
 					}
 					else m_biome = BIOME_SNOW;
 				}
-				else if (tempValue < 0.65f)
+				else if (tempValue <= 0.65f)
 				{
 					if (waterValue < 0.2f)
 					{
@@ -184,6 +188,8 @@ void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin)
 
 				//m_biome = BIOME_NONE;
 
+				//temporary setup for biome colours
+				//to-do: put and/or procgen textures for each, place objects
 				switch ((int)m_biome)
 				{
 				case BIOME_DESERT_COLD:

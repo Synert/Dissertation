@@ -86,7 +86,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, Cam
 	m_ColorShader->Initialize(m_Direct3D->GetDevice(), hwnd);
 
 	m_light = new Light;
-	m_light->SetLightAmbient(XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f));
+	m_light->SetLightAmbient(XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f));
 	m_light->SetLightDiffuse(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
 	m_light->SetLightDirection(XMFLOAT3(1.0f, -0.5f, 0.0f));
 
@@ -95,13 +95,33 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, Cam
 
 	srand(time(NULL));
 
-	for (int i = 0; i < 1; i++)
+	m_star = new Star;
+	StarParam new_star;
+	new_star.pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	new_star.temperature = Maths::RandFloat(2000.0f, 10000.0f); //6000.0f;
+	new_star.radius = Maths::RandFloat(700000.0f, 1000000.0f); //700000.0f;
+	m_star->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), new_star);
+
+	m_light->SetLightDiffuse(m_star->GetColor());
+
+	float angle = 0.0f;
+	float z = 0.0f;
+
+	for (int i = 0; i < 8; i++)
 	{
 		Planet* new_planet;
 		new_planet = new Planet();
-		float x = RandFloat(-5.0f, 5.0f);
-		float y = 0;// RandFloat(-20.0f, 20.0f);
-		float z = RandFloat(50.0f, 300.0f);
+
+		z += RandFloat(100.0f, 130.0f);
+
+		XMFLOAT3 newPos = XMFLOAT3(0, 0, z);
+
+		angle += RandFloat(45.0f, 95.0f);
+
+		XMMATRIX rotMat = XMMatrixRotationY(angle * 0.0174532925f);
+		XMVECTOR tempPos = XMLoadFloat3(&newPos);
+		tempPos = XMVector3TransformCoord(tempPos, rotMat);
+		XMStoreFloat3(&newPos, tempPos);
 
 		float pX = RandFloat(-500.0f, 500.0f);
 		float pY = RandFloat(-500.0f, 500.0f);
@@ -111,11 +131,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, Cam
 		float sY = RandFloat(0.0f, 1.0f);
 		float sZ = RandFloat(0.0f, 1.0f);
 
-		Planet::StarParam new_star;
-		new_star.pos = XMFLOAT3(0.0f, 0.0f, 95000.0f);
-		new_star.temperature = Maths::RandFloat(2000.0f, 10000.0f); //6000.0f;
-		new_star.radius = Maths::RandFloat(400000.0f, 2000000.0f); //700000.0f;
-		new_planet->Initialize(XMFLOAT3(x, y, z), RandFloat(20.0f, 50.0f), XMFLOAT3(pX, pY, pZ), XMFLOAT4(sX, sY, sZ, 1.0f), m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), new_star);
+		new_planet->Initialize(Maths::AddFloat3(m_star->GetParam().pos, newPos), RandFloat(20.0f, 50.0f), XMFLOAT3(pX, pY, pZ), XMFLOAT4(sX, sY, sZ, 1.0f), m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), m_star->GetParam());
 		m_planets.push_back(new_planet);
 	}
 
@@ -235,10 +251,20 @@ bool GraphicsClass::Render(TwBar* bar)
 
 	triCount = 0;
 
+	m_light->SetLightAmbient(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+	m_star->GetModel()->Render(m_Direct3D->GetDeviceContext());
+	m_ColorShader->Render(m_Direct3D->GetDeviceContext(), m_star->GetModel()->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_light);
+	m_light->SetLightAmbient(XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f));
+
 	for each(Planet* planet in m_planets)
 	{
 		std::list<ModelClass*> faceModels = planet->GetModels(m_Camera->GetPosition(), m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext());
 		int count = 0;
+		XMVECTOR vecPos = XMLoadFloat3(&planet->GetPosition());
+		vecPos = Maths::XMVector3NormalizeRobust(vecPos);
+		XMFLOAT3 newPos;
+		XMStoreFloat3(&newPos, vecPos);
+		m_light->SetLightDirection(newPos);
 
 		for each(ModelClass* model in faceModels)
 		{
@@ -324,7 +350,7 @@ float GraphicsClass::GetSpeed(XMFLOAT3 position)
 		}
 	}
 
-	float base = 0.25f;
+	float base = 0.5f;
 	lowest /= (closest->GetSize() * base * 10.0f);
 	float speed = base * lowest;
 	if (speed > base) speed = base;
@@ -1571,12 +1597,12 @@ void GraphicsClass::RemakePlanet()
 	float sY = RandFloat(0.0f, 1.0f);
 	float sZ = RandFloat(0.0f, 1.0f);
 
-	Planet::StarParam new_star;
-	new_star.pos = XMFLOAT3(0.0f, 0.0f, 60000.0f);
-	new_star.temperature = 6000.0f;
-	new_star.radius = 700000.0f;
+	//StarParam new_star;
+	//new_star.pos = XMFLOAT3(0.0f, 0.0f, 60000.0f);
+	//new_star.temperature = 6000.0f;
+	//new_star.radius = 700000.0f;
 
-	m_planets[0]->Initialize(XMFLOAT3(x, y, z), RandFloat(50.0f, 500.0f), XMFLOAT3(pX, pY, pZ), XMFLOAT4(sX, sY, sZ, 1.0f), m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), new_star);
+	m_planets[0]->Initialize(XMFLOAT3(x, y, z), RandFloat(50.0f, 500.0f), XMFLOAT3(pX, pY, pZ), XMFLOAT4(sX, sY, sZ, 1.0f), m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), m_star->GetParam());
 }
 
 void TW_CALL Trunk(void *p)

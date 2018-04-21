@@ -27,8 +27,8 @@ bool SystemClass::Initialize()
 	m_Camera = new CameraClass;
 
 	// Set the initial position of the camera.
-	m_Camera->SetPosition(0.0f, 2.0f, -10.0f);
-	m_Camera->SetRotation(0.0f, 0.0f, 0.0f);
+	m_Camera->SetPosition(0.0f, 50.0f, -200.0f);
+	m_Camera->SetRotation(15.0f, 0.0f, 0.0f);
 
 	// Initialize the width and height of the screen to zero before sending the variables into the function.
 	screenWidth = 0;
@@ -221,7 +221,7 @@ bool SystemClass::Frame()
 
 	if (m_Input->IsKeyDown(VK_SHIFT))
 	{
-		speed *= 3.5f;
+		speed *= 5.0f;
 	}
 
 	XMFLOAT3 forward, right, up;

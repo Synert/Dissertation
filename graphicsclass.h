@@ -22,12 +22,13 @@
 #include "planet.h"
 #include "maths.h"
 #include "mapping.h"
+#include "Star.h"
 
 using namespace noise;
 
 const bool FULL_SCREEN = false;
 const bool VSYNC_ENABLED = false; //evil
-const float SCREEN_DEPTH = 5000.0f;
+const float SCREEN_DEPTH = 20000.0f;
 const float SCREEN_NEAR = 0.1f;
 
 struct Transform
@@ -120,6 +121,7 @@ private:
 	ModelClass* m_Model;
 	std::vector<ModelClass*> m_objects;
 	std::vector<Planet*> m_planets;
+	Star* m_star;
 	ColorShaderClass* m_ColorShader;
 	TextureShaderClass* m_TextureShader;
 	CameraClass* m_Camera;

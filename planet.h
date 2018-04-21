@@ -4,27 +4,13 @@
 
 #include "face.h"
 #include "mapping.h"
+#include "Star.h"
 
 class Planet
 {
 public:
 	Planet();
 	~Planet();
-
-	struct StarParam
-	{
-		StarParam() {};
-		StarParam(XMFLOAT3 _pos, float _radius, float _temperature)
-		{
-			pos = _pos;
-			radius = _radius;
-			temperature = _temperature;
-		}
-
-		XMFLOAT3 pos;
-		float radius;
-		float temperature;
-	};
 
 	void Initialize(XMFLOAT3 position, float size, XMFLOAT3 perlin, XMFLOAT4 sky, ID3D11Device* device, ID3D11DeviceContext* context, StarParam star);
 	void Setup(XMFLOAT3 position, float size, XMFLOAT3 perlin, XMFLOAT4 sky, ID3D11Device* device, ID3D11DeviceContext* context, StarParam star);

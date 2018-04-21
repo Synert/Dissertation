@@ -147,6 +147,7 @@
     <ClInclude Include="maths.h" />
     <ClInclude Include="modelclass.h" />
     <ClInclude Include="planet.h" />
+    <ClInclude Include="Star.h" />
     <ClInclude Include="systemclass.h" />
     <ClInclude Include="textureclass.h" />
     <ClInclude Include="textureshaderclass.h" />
@@ -165,6 +166,7 @@
     <ClCompile Include="maths.cpp" />
     <ClCompile Include="modelclass.cpp" />
     <ClCompile Include="planet.cpp" />
+    <ClCompile Include="Star.cpp" />
     <ClCompile Include="systemclass.cpp" />
     <ClCompile Include="textureclass.cpp" />
     <ClCompile Include="textureshaderclass.cpp" />
