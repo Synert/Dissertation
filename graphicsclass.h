@@ -91,7 +91,8 @@ public:
 	Transform CreateTrunk(Transform transform, Parameters param, int recursion);
 	void CreateBush(Transform transform, Parameters param);
 	void CreateTree(Transform transform, Parameters param);
-	void RemakePlanet();
+	void QueueRemake();
+	void RemakeSystem();
 
 	void PopModel(bool clearAll);
 	void ExportModel();
@@ -127,6 +128,9 @@ private:
 	CameraClass* m_Camera;
 	Light* m_light;
 	int triCount;
+	bool remaking = false;
+
+	Planet* builtPlanet;
 
 	Mapping* m_hiresMap;
 };

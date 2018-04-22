@@ -48,7 +48,7 @@ public:
 
 	bool Initialize(Transform transform, int recursion, int faceDir, float distance,
 		ID3D11Device* device, ID3D11DeviceContext* context, XMFLOAT3 offset, float size,
-		int divide, Mapping* map, Mapping* hires);
+		int divide, Mapping* map, Mapping* hires, void* planet);
 	void MakeFace(ID3D11Device* device, ID3D11DeviceContext* context);
 	int GetIndexCount(float distance);
 	void Shutdown();
@@ -90,6 +90,8 @@ private:
 	//float* m_map;
 	//int m_res;
 	bool hasHires;
+
+	void* m_planet;
 
 	Mapping* lowres_map;
 	Mapping* hires_map;

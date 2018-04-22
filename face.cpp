@@ -15,11 +15,13 @@ Face::~Face()
 
 bool Face::Initialize(Transform transform, int recursion, int faceDir, float distance,
 	ID3D11Device* device, ID3D11DeviceContext* context, XMFLOAT3 offset, float size,
-	int divide, Mapping* map, Mapping* hires)
+	int divide, Mapping* map, Mapping* hires, void* planet)
 {
 	creating = true;
 
 	hasHires = false;
+
+	m_planet = planet;
 
 	m_transform = transform;
 	m_faceDir = faceDir;
@@ -39,7 +41,7 @@ bool Face::Initialize(Transform transform, int recursion, int faceDir, float dis
 	lowres_map = map;
 	hires_map = hires;
 
-	if (hires_map->IsBuilt())
+	if (hires_map->IsBuilt() && !hires_map->Cancelled() && hires_map->CurrentPlanet() == m_planet)
 	{
 		m_map = hires_map;
 		hasHires = true;
@@ -536,7 +538,8 @@ void Face::CreateChildren(ID3D11Device* device, ID3D11DeviceContext* context)
 				m_offset = origin;
 				m_offset.x += (i % 2) * m_size;
 				m_offset.y += (i > 1) * m_size;
-				m_children[i]->Initialize(m_transform, m_recursion - 1, m_faceDir, m_distance * 0.5f, device, context, m_offset, m_size * 0.5f, m_divide + 2, m_map, hires_map);
+				m_children[i]->Initialize(m_transform, m_recursion - 1, m_faceDir, m_distance * 0.5f, device, context, m_offset, m_size * 0.5f, m_divide + 1,
+					m_map, hires_map, m_planet);
 			}
 		}
 	}
@@ -584,7 +587,7 @@ std::list<ModelClass*> Face::GetModels(XMFLOAT3 camPos, ID3D11Device* device, ID
 			{
 				if (distance > m_children[i]->viewDist || !m_children[i]->m_recursion)
 				{
-					if (!m_children[i]->hasHires && hires_map->IsBuilt())
+					if (!m_children[i]->hasHires && hires_map->IsBuilt() && !hires_map->Cancelled() && hires_map->CurrentPlanet() == m_planet)
 					{
 						m_children[i]->Rebuild(device, context);
 						returnSelf = true;
@@ -682,7 +685,7 @@ void Face::Rebuild(ID3D11Device* device, ID3D11DeviceContext* context)
 {
 	Shutdown();
 
-	Initialize(m_transform, m_recursion, m_faceDir, m_distance, device, context, m_offset, m_size, m_divide, m_map, hires_map);
+	Initialize(m_transform, m_recursion, m_faceDir, m_distance, device, context, m_offset, m_size, m_divide, m_map, hires_map, m_planet);
 }
 
 bool Face::IsHires()

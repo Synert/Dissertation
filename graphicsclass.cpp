@@ -95,45 +95,9 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, Cam
 
 	srand(time(NULL));
 
-	m_star = new Star;
-	StarParam new_star;
-	new_star.pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	new_star.temperature = Maths::RandFloat(2000.0f, 10000.0f); //6000.0f;
-	new_star.radius = Maths::RandFloat(700000.0f, 1000000.0f); //700000.0f;
-	m_star->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), new_star);
+	m_hiresMap = new Mapping();
 
-	m_light->SetLightDiffuse(m_star->GetColor());
-
-	float angle = 0.0f;
-	float z = 0.0f;
-
-	for (int i = 0; i < 8; i++)
-	{
-		Planet* new_planet;
-		new_planet = new Planet();
-
-		z += RandFloat(100.0f, 130.0f);
-
-		XMFLOAT3 newPos = XMFLOAT3(0, 0, z);
-
-		angle += RandFloat(45.0f, 95.0f);
-
-		XMMATRIX rotMat = XMMatrixRotationY(angle * 0.0174532925f);
-		XMVECTOR tempPos = XMLoadFloat3(&newPos);
-		tempPos = XMVector3TransformCoord(tempPos, rotMat);
-		XMStoreFloat3(&newPos, tempPos);
-
-		float pX = RandFloat(-500.0f, 500.0f);
-		float pY = RandFloat(-500.0f, 500.0f);
-		float pZ = RandFloat(-500.0f, 500.0f);
-
-		float sX = RandFloat(0.0f, 1.0f);
-		float sY = RandFloat(0.0f, 1.0f);
-		float sZ = RandFloat(0.0f, 1.0f);
-
-		new_planet->Initialize(Maths::AddFloat3(m_star->GetParam().pos, newPos), RandFloat(20.0f, 50.0f), XMFLOAT3(pX, pY, pZ), XMFLOAT4(sX, sY, sZ, 1.0f), m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), m_star->GetParam());
-		m_planets.push_back(new_planet);
-	}
+	RemakeSystem();
 
 	return true;
 }
@@ -194,24 +158,57 @@ bool GraphicsClass::Render(TwBar* bar)
 	XMMATRIX worldMatrix, viewMatrix, projectionMatrix;
 	bool result;
 
+	if (remaking)
+	{
+		RemakeSystem();
+	}
+
 	// Clear the buffers to begin the scene.
 
 	//get the sky colour of the closest planet
 
 	XMFLOAT4 tempCol = COL_BLACK;
 	Planet* closest = NULL;
+	float distance = 9999999999999.0f;
 	for each(Planet* planet in m_planets)
 	{
+		XMVECTOR _pos = XMLoadFloat3(&m_Camera->GetPosition());
+		XMVECTOR _spos = XMLoadFloat3(&planet->GetPosition());
+		float p_distance;
+		_pos -= _spos;
+		_pos = XMVector3Length(_pos);
+		XMStoreFloat(&p_distance, _pos);
 		if (planet->DrawSky(m_Camera->GetPosition()))
 		{
 			tempCol = planet->GetSky();
+		}
+		if (p_distance < distance)
+		{
+			distance = p_distance;
 			closest = planet;
 		}
 	}
 
+
 	if (closest != NULL)
 	{
-		//create the hires map here
+		if (closest != builtPlanet)
+		{
+			m_hiresMap->Cancel();
+			m_hiresMap->Shutdown();
+			m_hiresMap->SetPlanet(NULL);
+		}
+		if (!m_hiresMap->IsBuilding())
+		{
+			//create the hires map here
+			m_hiresMap->Setup(1024, closest->GetTemperature(), closest->GetPerlin());
+			m_hiresMap->SetPlanet(closest);
+			builtPlanet = closest;
+		}
+	}
+	else
+	{
+		m_hiresMap->Shutdown();
 	}
 
 	m_Direct3D->BeginScene(tempCol);
@@ -258,7 +255,7 @@ bool GraphicsClass::Render(TwBar* bar)
 
 	for each(Planet* planet in m_planets)
 	{
-		std::list<ModelClass*> faceModels = planet->GetModels(m_Camera->GetPosition(), m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext());
+		std::list<ModelClass*> faceModels = planet->GetModels(m_Camera->GetPosition(), m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), m_hiresMap);
 		int count = 0;
 		XMVECTOR vecPos = XMLoadFloat3(&planet->GetPosition());
 		vecPos = Maths::XMVector3NormalizeRobust(vecPos);
@@ -1582,27 +1579,75 @@ void GraphicsClass::PopModel(bool clearAll)
 	}
 }
 
-void GraphicsClass::RemakePlanet()
+void GraphicsClass::QueueRemake()
 {
-	m_planets[0]->Shutdown();
-	float x = 0;// RandFloat(-200.0f, 200.0f);
-	float y = 0;// RandFloat(-20.0f, 20.0f);
-	float z = RandFloat(50.0f, 200.0f);
+	remaking = true;
+}
 
-	float pX = RandFloat(-500.0f, 500.0f);
-	float pY = RandFloat(-500.0f, 500.0f);
-	float pZ = RandFloat(-500.0f, 500.0f);
+void GraphicsClass::RemakeSystem()
+{
+	for each(Planet* planet in m_planets)
+	{
+		if (!planet->Built()) return;
+	}
 
-	float sX = RandFloat(0.0f, 1.0f);
-	float sY = RandFloat(0.0f, 1.0f);
-	float sZ = RandFloat(0.0f, 1.0f);
+	remaking = false;
 
-	//StarParam new_star;
-	//new_star.pos = XMFLOAT3(0.0f, 0.0f, 60000.0f);
-	//new_star.temperature = 6000.0f;
-	//new_star.radius = 700000.0f;
+	for each(Planet* planet in m_planets)
+	{
+		planet->Shutdown();
+		delete planet;
+	}
+	m_planets.clear();
 
-	m_planets[0]->Initialize(XMFLOAT3(x, y, z), RandFloat(50.0f, 500.0f), XMFLOAT3(pX, pY, pZ), XMFLOAT4(sX, sY, sZ, 1.0f), m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), m_star->GetParam());
+	if (m_star)
+	{
+		m_star->Shutdown();
+		delete m_star;
+	}
+
+	m_hiresMap->Shutdown();
+
+	m_star = new Star;
+	StarParam new_star;
+	new_star.pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	new_star.temperature = Maths::RandFloat(2000.0f, 10000.0f); //6000.0f;
+	new_star.radius = Maths::RandFloat(700000.0f, 1000000.0f); //700000.0f;
+	m_star->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), new_star);
+
+	m_light->SetLightDiffuse(m_star->GetColor());
+
+	float angle = 0.0f;
+	float z = 0.0f;
+
+	for (int i = 0; i < 10; i++)
+	{
+		Planet* new_planet;
+		new_planet = new Planet();
+
+		z += RandFloat(100.0f, 130.0f);
+
+		XMFLOAT3 newPos = XMFLOAT3(0, 0, z);
+
+		angle += RandFloat(45.0f, 95.0f);
+
+		XMMATRIX rotMat = XMMatrixRotationY(angle * 0.0174532925f);
+		XMVECTOR tempPos = XMLoadFloat3(&newPos);
+		tempPos = XMVector3TransformCoord(tempPos, rotMat);
+		XMStoreFloat3(&newPos, tempPos);
+
+		float pX = RandFloat(-500.0f, 500.0f);
+		float pY = RandFloat(-500.0f, 500.0f);
+		float pZ = RandFloat(-500.0f, 500.0f);
+
+		float sX = RandFloat(0.0f, 1.0f);
+		float sY = RandFloat(0.0f, 1.0f);
+		float sZ = RandFloat(0.0f, 1.0f);
+
+		new_planet->Initialize(Maths::AddFloat3(m_star->GetParam().pos, newPos), RandFloat(20.0f, 50.0f), XMFLOAT3(pX, pY, pZ),
+			XMFLOAT4(sX, sY, sZ, 1.0f), m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), m_star->GetParam(), m_hiresMap);
+		m_planets.push_back(new_planet);
+	}
 }
 
 void TW_CALL Trunk(void *p)
@@ -1615,7 +1660,7 @@ void TW_CALL Trunk(void *p)
 void TW_CALL MakePlanet(void *p)
 {
 	GraphicsClass* parent = static_cast<GraphicsClass*>(p);
-	parent->RemakePlanet();
+	parent->RemakeSystem();
 }
 
 void TW_CALL CopyStdStringToClient(std::string& destinationClientString, const std::string& sourceLibraryString)

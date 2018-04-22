@@ -13,6 +13,7 @@ void Mapping::Setup(int _hres, float m_temp, XMFLOAT3 perlin)
 		Shutdown();
 	}
 	h_building = true;
+	cancel = false;
 	std::thread new_thread(&Mapping::CreateMaps, this, _hres, m_temp, perlin);
 	new_thread.detach();
 }
@@ -22,12 +23,30 @@ void Mapping::CreateMaps(int _hres, float m_temp, XMFLOAT3 perlin)
 	h_res = _hres;
 	c_map = new XMFLOAT3[6 * h_res * h_res];
 	h_map = new float[6 * h_res * h_res];
-	w_map = new float[6 * h_res * h_res];
 
 	CreateHeightMap(m_temp, perlin);
 }
 
 void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin)
+{
+	std::thread new_thread1(&Mapping::HeightmapThread, this, 0, m_temp, perlin);
+	std::thread new_thread2(&Mapping::HeightmapThread, this, 1, m_temp, perlin);
+	std::thread new_thread3(&Mapping::HeightmapThread, this, 2, m_temp, perlin);
+	std::thread new_thread4(&Mapping::HeightmapThread, this, 3, m_temp, perlin);
+	std::thread new_thread5(&Mapping::HeightmapThread, this, 4, m_temp, perlin);
+	std::thread new_thread6(&Mapping::HeightmapThread, this, 5, m_temp, perlin);
+	new_thread1.join();
+	new_thread2.join();
+	new_thread3.join();
+	new_thread4.join();
+	new_thread5.join();
+	new_thread6.join();
+
+	h_built = true;
+	cancel = false;
+}
+
+void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin)
 {
 	module::Perlin perlinModule, waterModule, terrainPicker;
 	module::RidgedMulti altModule;
@@ -55,281 +74,288 @@ void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin)
 	float waterHeight = (float)Maths::RandInt(25, 50) / 100.0f;
 	//float waterHeight = 0.27f;
 
-	for (int z = 0; z < 6; z++)
+	for (int x = 0; x < h_res; x++)
 	{
-		for (int x = 0; x < h_res; x++)
+		for (int y = 0; y < h_res; y++)
 		{
-			for (int y = 0; y < h_res; y++)
+			if (cancel)
 			{
-				XMFLOAT3 coord;
+				h_building = false;
+				h_built = true;
+				return;
+			}
 
-				int tempZ = -1.0f;
-				float tempX = (float)x / (float)(h_res - 1);
-				tempX *= 2;
-				tempX--;
+			XMFLOAT3 coord;
 
-				float tempY = (float)y / (float)(h_res - 1);
-				tempY *= 2;
-				tempY--;
+			int tempZ = -1.0f;
+			float tempX = (float)x / (float)(h_res - 1);
+			tempX *= 2;
+			tempX--;
 
-				coord.x = tempX;
-				coord.y = tempY;
-				coord.z = tempZ;
+			float tempY = (float)y / (float)(h_res - 1);
+			tempY *= 2;
+			tempY--;
 
-				XMMATRIX cubeRot = XMMatrixRotationY(((90.0f * (float)z)) * 0.0174532925f);
-				if (z > 3)
+			coord.x = tempX;
+			coord.y = tempY;
+			coord.z = tempZ;
+
+			XMMATRIX cubeRot = XMMatrixRotationY(((90.0f * (float)z)) * 0.0174532925f);
+			if (z > 3)
+			{
+				cubeRot = XMMatrixRotationX((90.0f + (180.0f * (float)(z - 4))) * 0.0174532925f);
+			}
+
+			XMVECTOR tempPos = XMLoadFloat3(&coord);
+			tempPos = XMVector3TransformCoord(tempPos, cubeRot);
+			XMStoreFloat3(&coord, tempPos);
+
+			//get the coordinates for the perlin noise
+			//coord = AddFloat3(coord, perlin);
+			coord.x += perlin.x;
+			coord.y += perlin.y;
+			coord.z += perlin.z;
+
+			//coord = TakeFloat3(coord, origin);
+
+			//tempCoord = MultFloat3(tempCoord, perlinScale);
+			coord.x *= perlinScale.x;
+			coord.y *= perlinScale.y;
+			coord.z *= perlinScale.z;
+
+			//get a value between 1 and 0
+			double value = myModule.GetValue(coord.x, coord.y, coord.z);
+			value += 2.0f;
+			value /= 3.0f;
+
+			double waterValue = waterModule.GetValue(coord.x, coord.y, coord.z);
+			waterValue += 2.0f;
+			waterValue /= 3.0f;
+
+			waterValue *= (waterHeight * 1.5f);
+
+			bool desert = false;
+			if (!(m_temp < 373.2f && m_temp > 273.2f))
+			{
+				//waterValue = 0.0f;
+				//desert = true;
+			}
+			if (m_temp > 373.2f)
+			{
+				waterValue *= (m_temp - 373.2f) / 2700.0f;
+			}
+			//float value = tempX;
+
+			float tempValue = 1.0f - value;
+			tempValue += m_temp / 2700.0f;
+			if (m_temp <= 273.2f)
+			{
+				tempValue -= (273.2f - m_temp) / 500.0f;
+			}
+
+			//choose the biome
+			Biome m_biome = BIOME_NONE;
+			if (tempValue < 0.2f && !desert)
+			{
+				if (waterValue < 0.3f)
 				{
-					cubeRot = XMMatrixRotationX((90.0f + (180.0f * (float)(z - 4))) * 0.0174532925f);
+					m_biome = BIOME_TUNDRA;
 				}
-
-				XMVECTOR tempPos = XMLoadFloat3(&coord);
-				tempPos = XMVector3TransformCoord(tempPos, cubeRot);
-				XMStoreFloat3(&coord, tempPos);
-
-				//get the coordinates for the perlin noise
-				//coord = AddFloat3(coord, perlin);
-				coord.x += perlin.x;
-				coord.y += perlin.y;
-				coord.z += perlin.z;
-
-				//coord = TakeFloat3(coord, origin);
-
-				//tempCoord = MultFloat3(tempCoord, perlinScale);
-				coord.x *= perlinScale.x;
-				coord.y *= perlinScale.y;
-				coord.z *= perlinScale.z;
-
-				//get a value between 1 and 0
-				double value = myModule.GetValue(coord.x, coord.y, coord.z);
-				value += 2.0f;
-				value /= 3.0f;
-
-				double waterValue = waterModule.GetValue(coord.x, coord.y, coord.z);
-				waterValue += 2.0f;
-				waterValue /= 3.0f;
-
-				waterValue *= (waterHeight * 1.5f);
-
-				bool desert = false;
-				if (!(m_temp < 373.2f && m_temp > 273.2f))
+				else m_biome = BIOME_SNOW;
+			}
+			else if (tempValue <= 0.65f)
+			{
+				if (waterValue < 0.2f)
 				{
-					//waterValue = 0.0f;
-					//desert = true;
-				}
-				if (m_temp > 373.2f)
-				{
-					waterValue *= (m_temp - 373.2f) / 2700.0f;
-				}
-				//float value = tempX;
-
-				float tempValue = 1.0f - value;
-				tempValue += m_temp / 2700.0f;
-				if (m_temp <= 273.2f)
-				{
-					tempValue -= (273.2f - m_temp) / 500.0f;
-				}
-
-				//choose the biome
-				Biome m_biome = BIOME_NONE;
-				if (tempValue < 0.2f && !desert)
-				{
-					if (waterValue < 0.3f)
-					{
-						m_biome = BIOME_TUNDRA;
-					}
-					else m_biome = BIOME_SNOW;
-				}
-				else if (tempValue <= 0.65f)
-				{
-					if (waterValue < 0.2f)
-					{
-						m_biome = BIOME_DESERT_COLD;
-					}
-					else
-					{
-						if (value < 0.5f)
-						{
-							m_biome = BIOME_FOREST_BOREAL;
-						}
-						else
-						{
-							if (waterValue < 0.3f)
-							{
-								m_biome = BIOME_WOODLAND;
-							}
-							else if (waterValue < 0.6f)
-							{
-								m_biome = BIOME_FOREST_TEMPERATE_SEASONAL;
-							}
-							else
-							{
-								m_biome = BIOME_FOREST_TEMPERATE_RAIN;
-							}
-						}
-					}
+					m_biome = BIOME_DESERT_COLD;
 				}
 				else
 				{
-					if (waterValue < 0.3f)
+					if (value < 0.5f)
 					{
-						m_biome = BIOME_DESERT_HOT;
-					}
-					else if (waterValue < 0.6f)
-					{
-						m_biome = BIOME_FOREST_TROPICAL_SEASONAL;
+						m_biome = BIOME_FOREST_BOREAL;
 					}
 					else
 					{
-						m_biome = BIOME_FOREST_TROPICAL_RAIN;
+						if (waterValue < 0.3f)
+						{
+							m_biome = BIOME_WOODLAND;
+						}
+						else if (waterValue < 0.6f)
+						{
+							m_biome = BIOME_FOREST_TEMPERATE_SEASONAL;
+						}
+						else
+						{
+							m_biome = BIOME_FOREST_TEMPERATE_RAIN;
+						}
 					}
 				}
-
-				XMFLOAT3 finalCol = XMFLOAT3(0.0f, 0.0f, 0.0f);
-
-				//m_biome = BIOME_NONE;
-
-				//temporary setup for biome colours
-				//to-do: put and/or procgen textures for each, place objects
-				switch ((int)m_biome)
-				{
-				case BIOME_DESERT_COLD:
-					finalCol = XMFLOAT3(0.4f, 0.35f, 0.15f);
-					break;
-				case BIOME_DESERT_HOT:
-					finalCol = XMFLOAT3(0.45f, 0.25f, 0.1f);
-					break;
-				case BIOME_FOREST_BOREAL:
-					finalCol = XMFLOAT3(0.45f, 0.75f, 0.25f);
-					break;
-				case BIOME_FOREST_TEMPERATE_RAIN:
-					finalCol = XMFLOAT3(0.05f, 0.65f, 0.35f);
-					break;
-				case BIOME_FOREST_TEMPERATE_SEASONAL:
-					finalCol = XMFLOAT3(0.05f, 0.45f, 0.25f);
-					break;
-				case BIOME_FOREST_TROPICAL_RAIN:
-					finalCol = XMFLOAT3(0.05f, 0.4f, 0.1f);
-					break;
-				case BIOME_FOREST_TROPICAL_SEASONAL:
-					finalCol = XMFLOAT3(0.05f, 0.65f, 0.15f);
-					break;
-				case BIOME_SNOW:
-					//do thing
-					finalCol = XMFLOAT3(1.0f, 1.0f, 1.0f);
-					break;
-				case BIOME_TUNDRA:
-					finalCol = XMFLOAT3(0.55f, 0.50f, 0.4f);
-					break;
-				case BIOME_WOODLAND:
-					finalCol = XMFLOAT3(0.45f, 0.65f, 0.35f);
-					break;
-				}
-
-				finalCol = Maths::ScalarFloat3(finalCol, (value + 2.0f) / 2.0f);
-
-				//now move that between 1 and 0.15
-				float newValue = (float)value;
-				newValue *= 3.5f;
-				newValue += 6.5f;
-				newValue /= 30.0f;
-
-				float tempScale = 1.0f - (value / 2.5f);
-				float newTemp = m_temp * tempScale;
-
-				if (newTemp < 0) newTemp = 0;
-				if (newTemp > 3000.0f) newTemp = 3000.0f;
-
-				//XMFLOAT3 col = XMFLOAT3((3000.0f - newTemp) / 3000.0f, newTemp / 3000.0f, 0.0f);
-				//col = XMFLOAT3((0.8f - value * 0.8f), (value * 0.7f), 0.5f);
-				XMFLOAT3 col = finalCol;
-
-				float waterColor = 0.0f;
-				float oldValue = newValue;
-				bool water = false;
-				bool lava = false;
-				bool ice = false;
-				if (m_temp > 1000.0f && newValue < waterHeight)
-				{
-					lava = true;
-					waterColor = abs(newValue - waterHeight);
-					waterColor /= waterHeight;
-					waterColor = waterHeight - waterColor;
-					waterColor += 0.5f;
-					waterColor *= 1.0f;
-					//newValue *= 0.95f;
-				}
-				else if (newValue < waterHeight && m_temp < 373.2f && m_temp > 273.2f)
-				{
-					waterColor = abs(newValue - waterHeight);
-					waterColor /= waterHeight;
-					waterColor = waterHeight - waterColor;
-					waterColor *= 1.25f;
-					//newValue = waterHeight;
-					water = true;
-				}
-				else if(m_temp < 273.2f && newValue < waterHeight)
-				{
-					ice = true;
-					waterColor = abs(newValue - waterHeight);
-					waterColor /= waterHeight;
-					waterColor = waterHeight - waterColor;
-					waterColor += 0.5f;
-					waterColor *= 1.5f;
-				}
-
-				if (newValue < waterHeight && (m_temp < 373.2f || m_temp > 1000.0f))
-				{
-					newValue = waterHeight;
-				}
-
-				//col = XMFLOAT4(1.0f - value, 0, value, 1.0f);
-				//it->color = XMFLOAT4((temperature * tempScale) / 3000.0f, 0.0f, 1.0f - (temperature * tempScale) / 3000.0f, 1.0f);
-				if (water)
-				{
-					col.x *= waterColor;
-					col.y *= waterColor;
-					col.z *= waterColor;
-					//col.z += 0.25 * (waterColor - waterHeight);
-					col.z += 0.25f;
-				}
-				if (lava)
-				{
-					col.x *= waterColor;
-					col.y *= waterColor;
-					col.z *= waterColor * 0.25f;
-					col.x += 0.5 * (waterColor - waterHeight);
-					col.y += 0.25 * (waterColor - waterHeight);
-
-					//it->color = XMFLOAT4(1.0f, 0.25f, 0.0f, 1.0f);
-				}
-				if (ice)
-				{
-					col = Maths::ScalarFloat3(col, 0.15f);
-					col = Maths::AddFloat3(col, XMFLOAT3(0.55f, 0.55f, 0.55f));
-
-					col.x *= waterColor;
-					col.y *= waterColor;
-					col.z *= waterColor;
-
-					if (col.x > 1.0f) col.x = 1.0f;
-					if (col.y > 1.0f) col.y = 1.0f;
-					if (col.z > 1.0f) col.z = 1.0f;
-					col.z += 0.45;
-				}
-
-				h_map[(z * h_res * h_res) + (y * h_res) + x] = (float)newValue;
-				c_map[(z * h_res * h_res) + (y * h_res) + x] = col;
-				//c_map[(z * h_res * h_res) + (y * h_res) + x] = XMFLOAT3((m_temp * tempScale) / 3000.0f, 0.0f, 1.0f - (m_temp * tempScale) / 3000.0f);
-
 			}
+			else
+			{
+				if (waterValue < 0.3f)
+				{
+					m_biome = BIOME_DESERT_HOT;
+				}
+				else if (waterValue < 0.6f)
+				{
+					m_biome = BIOME_FOREST_TROPICAL_SEASONAL;
+				}
+				else
+				{
+					m_biome = BIOME_FOREST_TROPICAL_RAIN;
+				}
+			}
+
+			XMFLOAT3 finalCol = XMFLOAT3(0.0f, 0.0f, 0.0f);
+
+			//m_biome = BIOME_NONE;
+
+			//temporary setup for biome colours
+			//to-do: put and/or procgen textures for each, place objects
+			switch ((int)m_biome)
+			{
+			case BIOME_DESERT_COLD:
+				finalCol = XMFLOAT3(0.4f, 0.35f, 0.15f);
+				break;
+			case BIOME_DESERT_HOT:
+				finalCol = XMFLOAT3(0.45f, 0.25f, 0.1f);
+				break;
+			case BIOME_FOREST_BOREAL:
+				finalCol = XMFLOAT3(0.45f, 0.75f, 0.25f);
+				break;
+			case BIOME_FOREST_TEMPERATE_RAIN:
+				finalCol = XMFLOAT3(0.05f, 0.65f, 0.35f);
+				break;
+			case BIOME_FOREST_TEMPERATE_SEASONAL:
+				finalCol = XMFLOAT3(0.05f, 0.45f, 0.25f);
+				break;
+			case BIOME_FOREST_TROPICAL_RAIN:
+				finalCol = XMFLOAT3(0.05f, 0.4f, 0.1f);
+				break;
+			case BIOME_FOREST_TROPICAL_SEASONAL:
+				finalCol = XMFLOAT3(0.05f, 0.65f, 0.15f);
+				break;
+			case BIOME_SNOW:
+				//do thing
+				finalCol = XMFLOAT3(1.0f, 1.0f, 1.0f);
+				break;
+			case BIOME_TUNDRA:
+				finalCol = XMFLOAT3(0.55f, 0.50f, 0.4f);
+				break;
+			case BIOME_WOODLAND:
+				finalCol = XMFLOAT3(0.45f, 0.65f, 0.35f);
+				break;
+			}
+
+			finalCol = Maths::ScalarFloat3(finalCol, (value + 2.0f) / 2.0f);
+
+			//now move that between 1 and 0.15
+			float newValue = (float)value;
+			newValue *= 3.5f;
+			newValue += 6.5f;
+			newValue /= 30.0f;
+
+			float tempScale = 1.0f - (value / 2.5f);
+			float newTemp = m_temp * tempScale;
+
+			if (newTemp < 0) newTemp = 0;
+			if (newTemp > 3000.0f) newTemp = 3000.0f;
+
+			//XMFLOAT3 col = XMFLOAT3((3000.0f - newTemp) / 3000.0f, newTemp / 3000.0f, 0.0f);
+			//col = XMFLOAT3((0.8f - value * 0.8f), (value * 0.7f), 0.5f);
+			XMFLOAT3 col = finalCol;
+
+			float waterColor = 0.0f;
+			float oldValue = newValue;
+			bool water = false;
+			bool lava = false;
+			bool ice = false;
+			if (m_temp > 1000.0f && newValue < waterHeight)
+			{
+				lava = true;
+				waterColor = abs(newValue - waterHeight);
+				waterColor /= waterHeight;
+				waterColor = waterHeight - waterColor;
+				waterColor += 0.5f;
+				waterColor *= 1.0f;
+				//newValue *= 0.95f;
+			}
+			else if (newValue < waterHeight && m_temp < 373.2f && m_temp > 273.2f)
+			{
+				waterColor = abs(newValue - waterHeight);
+				waterColor /= waterHeight;
+				waterColor = waterHeight - waterColor;
+				waterColor *= 1.25f;
+				//newValue = waterHeight;
+				water = true;
+			}
+			else if (m_temp < 273.2f && newValue < waterHeight)
+			{
+				ice = true;
+				waterColor = abs(newValue - waterHeight);
+				waterColor /= waterHeight;
+				waterColor = waterHeight - waterColor;
+				waterColor += 0.5f;
+				waterColor *= 1.5f;
+			}
+
+			if (newValue < waterHeight && (m_temp < 373.2f || m_temp > 1000.0f))
+			{
+				newValue = waterHeight;
+			}
+
+			//col = XMFLOAT4(1.0f - value, 0, value, 1.0f);
+			//it->color = XMFLOAT4((temperature * tempScale) / 3000.0f, 0.0f, 1.0f - (temperature * tempScale) / 3000.0f, 1.0f);
+			if (water)
+			{
+				col.x *= waterColor;
+				col.y *= waterColor;
+				col.z *= waterColor;
+				//col.z += 0.25 * (waterColor - waterHeight);
+				col.z += 0.25f;
+			}
+			if (lava)
+			{
+				col.x *= waterColor;
+				col.y *= waterColor;
+				col.z *= waterColor * 0.25f;
+				col.x += 0.5 * (waterColor - waterHeight);
+				col.y += 0.25 * (waterColor - waterHeight);
+
+				//it->color = XMFLOAT4(1.0f, 0.25f, 0.0f, 1.0f);
+			}
+			if (ice)
+			{
+				col = Maths::ScalarFloat3(col, 0.15f);
+				col = Maths::AddFloat3(col, XMFLOAT3(0.55f, 0.55f, 0.55f));
+
+				col.x *= waterColor;
+				col.y *= waterColor;
+				col.z *= waterColor;
+
+				if (col.x > 1.0f) col.x = 1.0f;
+				if (col.y > 1.0f) col.y = 1.0f;
+				if (col.z > 1.0f) col.z = 1.0f;
+				col.z += 0.45;
+			}
+
+			h_map[(z * h_res * h_res) + (y * h_res) + x] = (float)newValue;
+			c_map[(z * h_res * h_res) + (y * h_res) + x] = col;
+			//c_map[(z * h_res * h_res) + (y * h_res) + x] = XMFLOAT3((m_temp * tempScale) / 3000.0f, 0.0f, 1.0f - (m_temp * tempScale) / 3000.0f);
+
 		}
 	}
-
-	h_built = true;
 }
 
 void Mapping::Shutdown()
 {
+	if (!h_built && h_building)
+	{
+		cancel = true;
+		return;
+	}
 	if (h_built || h_building)
 	{
 		delete[] h_map;
@@ -396,4 +422,24 @@ bool Mapping::IsBuilt()
 bool Mapping::IsBuilding()
 {
 	return h_building;
+}
+
+void Mapping::Cancel()
+{
+	cancel = true;
+}
+
+bool Mapping::Cancelled()
+{
+	return cancel;
+}
+
+void Mapping::SetPlanet(void* planet)
+{
+	m_planet = planet;
+}
+
+void* Mapping::CurrentPlanet()
+{
+	return m_planet;
 }

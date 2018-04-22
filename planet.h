@@ -12,14 +12,17 @@ public:
 	Planet();
 	~Planet();
 
-	void Initialize(XMFLOAT3 position, float size, XMFLOAT3 perlin, XMFLOAT4 sky, ID3D11Device* device, ID3D11DeviceContext* context, StarParam star);
-	void Setup(XMFLOAT3 position, float size, XMFLOAT3 perlin, XMFLOAT4 sky, ID3D11Device* device, ID3D11DeviceContext* context, StarParam star);
-	std::list<ModelClass*> GetModels(XMFLOAT3 camPos, ID3D11Device* device, ID3D11DeviceContext* context);
+	void Initialize(XMFLOAT3 position, float size, XMFLOAT3 perlin, XMFLOAT4 sky, ID3D11Device* device, ID3D11DeviceContext* context, StarParam star, Mapping* hires_map);
+	void Setup(XMFLOAT3 position, float size, XMFLOAT3 perlin, XMFLOAT4 sky, ID3D11Device* device, ID3D11DeviceContext* context, StarParam star, Mapping* hires_map);
+	std::list<ModelClass*> GetModels(XMFLOAT3 camPos, ID3D11Device* device, ID3D11DeviceContext* context, Mapping* hires_map);
 	void Shutdown();
 	bool DrawSky(XMFLOAT3 camPos);
 	XMFLOAT4 GetSky();
 	XMFLOAT3 GetPosition();
 	float GetSize();
+	float GetTemperature();
+	XMFLOAT3 GetPerlin();
+	bool Built();
 
 private:
 	Face* m_faces[6];
@@ -41,5 +44,5 @@ private:
 	bool hires;
 
 	Mapping* m_map;
-	Mapping* hires_map;
+	//Mapping* hires_map;
 };

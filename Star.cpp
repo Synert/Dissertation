@@ -197,3 +197,8 @@ XMFLOAT4 Star::GetColor()
 	retColor = Maths::ScalarFloat4(retColor, 0.33f);
 	return retColor;
 }
+
+void Star::Shutdown()
+{
+	delete m_model;
+}
