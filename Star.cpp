@@ -191,10 +191,10 @@ ModelClass* Star::GetModel()
 XMFLOAT4 Star::GetColor()
 {
 	XMFLOAT4 retColor = m_color;
-	retColor.x += 2.0f;
-	retColor.y += 2.0f;
-	retColor.z += 2.0f;
-	retColor = Maths::ScalarFloat4(retColor, 0.33f);
+	retColor.x += 3.0f;
+	retColor.y += 3.0f;
+	retColor.z += 3.0f;
+	retColor = Maths::ScalarFloat4(retColor, 0.25f);
 	return retColor;
 }
 

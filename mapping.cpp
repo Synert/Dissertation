@@ -29,6 +29,7 @@ void Mapping::CreateMaps(int _hres, float m_temp, XMFLOAT3 perlin)
 
 void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin)
 {
+	h_finished = 0;
 	std::thread new_thread1(&Mapping::HeightmapThread, this, 0, m_temp, perlin);
 	std::thread new_thread2(&Mapping::HeightmapThread, this, 1, m_temp, perlin);
 	std::thread new_thread3(&Mapping::HeightmapThread, this, 2, m_temp, perlin);
@@ -71,8 +72,32 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin)
 
 	float pScale = 0.75f;
 	XMFLOAT3 perlinScale = XMFLOAT3(pScale, pScale, pScale);
-	float waterHeight = (float)Maths::RandInt(25, 50) / 100.0f;
+	float waterHeight = Maths::RandIntSeeded(0, 100, (int)(perlin.x + perlin.y + perlin.z)); 
+	waterHeight /= 100.0f;
 	//float waterHeight = 0.27f;
+
+	//experimental texture loading
+	//https://stackoverflow.com/questions/9296059/read-pixel-value-in-bmp-file
+
+	FILE* f = fopen("biomes.bmp", "rb");
+	unsigned char info[54];
+	fread(info, sizeof(unsigned char), 54, f); // read the 54-byte header
+
+											   // extract image height and width from header
+	int width = *(int*)&info[18];
+	int height = *(int*)&info[22];
+
+	int size = 3 * width * height;
+	unsigned char* data = new unsigned char[size]; // allocate 3 bytes per pixel
+	fread(data, sizeof(unsigned char), size, f); // read the rest of the data at once
+	fclose(f);
+
+	for (int i = 0; i < size; i += 3)
+	{
+		unsigned char tmp = data[i];
+		data[i] = data[i + 2];
+		data[i + 2] = tmp;
+	}
 
 	for (int x = 0; x < h_res; x++)
 	{
@@ -81,7 +106,7 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin)
 			if (cancel)
 			{
 				h_building = false;
-				h_built = true;
+				h_finished++;
 				return;
 			}
 
@@ -128,11 +153,11 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin)
 			value += 2.0f;
 			value /= 3.0f;
 
-			double waterValue = waterModule.GetValue(coord.x, coord.y, coord.z);
+			double waterValue = waterModule.GetValue(coord.x * 3.0f, coord.y * 3.0f, coord.z * 3.0f);
 			waterValue += 2.0f;
 			waterValue /= 3.0f;
 
-			waterValue *= (waterHeight * 1.5f);
+			waterValue *= (waterHeight * 0.5f);
 
 			bool desert = false;
 			if (!(m_temp < 373.2f && m_temp > 273.2f))
@@ -147,11 +172,18 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin)
 			//float value = tempX;
 
 			float tempValue = 1.0f - value;
-			tempValue += m_temp / 2700.0f;
+			if (m_temp > 373.2f)
+			{
+				tempValue += (m_temp - 373.2f) / 2700.0f;
+			}
 			if (m_temp <= 273.2f)
 			{
-				tempValue -= (273.2f - m_temp) / 500.0f;
+				tempValue -= (273.2f - m_temp) / 400.0f;
 			}
+
+			//tempValue += waterHeight * 2;
+			//tempValue /= (1.0f + waterHeight * 2);
+			tempValue *= 1.0f + waterHeight * 2.0f;
 
 			//choose the biome
 			Biome m_biome = BIOME_NONE;
@@ -251,6 +283,71 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin)
 
 			finalCol = Maths::ScalarFloat3(finalCol, (value + 2.0f) / 2.0f);
 
+			float cappedValue = tempValue;
+			if (cappedValue < 0.0f) cappedValue = 0.0f;
+			if (cappedValue > 1.0f) cappedValue = 1.0f;
+
+			float cappedWater = waterValue;
+			if (cappedWater < 0.0f) cappedWater = 0.0f;
+			if (cappedWater > 1.0f) cappedWater = 1.0f;
+
+			//cappedValue = 1.0f - cappedValue;
+			//cappedWater = 1.0f - cappedWater;
+
+			int newTempY = (int)(cappedValue * 100.0f);
+			int newTempX = (int)(cappedWater * 100.0f);
+
+			if (newTempX > 99) newTempX = 99;
+			if (newTempX < 0) newTempX = 0;
+
+			if (newTempY > 99) newTempY = 99;
+			if (newTempY < 0) newTempY = 0;
+
+			finalCol.x = data[3 * (newTempX * width + newTempY)] / 255.0f;
+			finalCol.y = data[3 * (newTempX * width + newTempY) + 1] / 255.0f;
+			finalCol.z = data[3 * (newTempX * width + newTempY) + 2] / 255.0f;
+
+			float waterColor = 0.0f;
+			bool water = false;
+			bool lava = false;
+			bool ice = false;
+
+			if (m_temp >= 1000.0f && value < waterHeight)
+			{
+				lava = true;
+				waterColor = abs(value - waterHeight);
+				waterColor /= waterHeight;
+				waterColor = waterHeight - waterColor;
+				waterColor += 0.5f;
+				waterColor *= 1.0f;
+				//newValue *= 0.95f;
+			}
+			else if (value < waterHeight && m_temp <= 373.2f && m_temp >= 273.2f)
+			{
+				waterColor = 1.0f - (abs(value - waterHeight) * 2.0f) / waterHeight;
+				waterColor /= 4.0f;
+				//waterColor /= waterHeight;
+				//waterColor = waterHeight - waterColor;
+				//waterColor *= 0.5f;
+				//newValue = waterHeight;
+				//value = waterHeight;
+				water = true;
+			}
+			else if (m_temp < 273.2f && value < waterHeight)
+			{
+				ice = true;
+				waterColor = abs(value - waterHeight);
+				waterColor /= waterHeight;
+				waterColor = waterHeight - waterColor;
+				waterColor += 0.5f;
+				waterColor *= 1.5f;
+			}
+
+			if (value < waterHeight && (m_temp < 373.2f || m_temp > 1000.0f))
+			{
+				value = waterHeight;
+			}
+
 			//now move that between 1 and 0.15
 			float newValue = (float)value;
 			newValue *= 3.5f;
@@ -267,54 +364,14 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin)
 			//col = XMFLOAT3((0.8f - value * 0.8f), (value * 0.7f), 0.5f);
 			XMFLOAT3 col = finalCol;
 
-			float waterColor = 0.0f;
-			float oldValue = newValue;
-			bool water = false;
-			bool lava = false;
-			bool ice = false;
-			if (m_temp > 1000.0f && newValue < waterHeight)
-			{
-				lava = true;
-				waterColor = abs(newValue - waterHeight);
-				waterColor /= waterHeight;
-				waterColor = waterHeight - waterColor;
-				waterColor += 0.5f;
-				waterColor *= 1.0f;
-				//newValue *= 0.95f;
-			}
-			else if (newValue < waterHeight && m_temp < 373.2f && m_temp > 273.2f)
-			{
-				waterColor = abs(newValue - waterHeight);
-				waterColor /= waterHeight;
-				waterColor = waterHeight - waterColor;
-				waterColor *= 1.25f;
-				//newValue = waterHeight;
-				water = true;
-			}
-			else if (m_temp < 273.2f && newValue < waterHeight)
-			{
-				ice = true;
-				waterColor = abs(newValue - waterHeight);
-				waterColor /= waterHeight;
-				waterColor = waterHeight - waterColor;
-				waterColor += 0.5f;
-				waterColor *= 1.5f;
-			}
-
-			if (newValue < waterHeight && (m_temp < 373.2f || m_temp > 1000.0f))
-			{
-				newValue = waterHeight;
-			}
-
 			//col = XMFLOAT4(1.0f - value, 0, value, 1.0f);
 			//it->color = XMFLOAT4((temperature * tempScale) / 3000.0f, 0.0f, 1.0f - (temperature * tempScale) / 3000.0f, 1.0f);
 			if (water)
 			{
-				col.x *= waterColor;
-				col.y *= waterColor;
-				col.z *= waterColor;
+				col = Maths::ScalarFloat3(col, waterColor);
 				//col.z += 0.25 * (waterColor - waterHeight);
-				col.z += 0.25f;
+				col.z += 0.35f;
+				col = Maths::ScalarFloat3(col, 0.65f);
 			}
 			if (lava)
 			{
@@ -351,6 +408,10 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin)
 
 void Mapping::Shutdown()
 {
+	if (h_finished == 6)
+	{
+		h_built = true;
+	}
 	if (!h_built && h_building)
 	{
 		cancel = true;
@@ -363,6 +424,7 @@ void Mapping::Shutdown()
 	}
 	h_building = false;
 	h_built = false;
+	h_finished = 0;
 }
 
 float Mapping::GetHeightMapValue(int face, int x, int y)

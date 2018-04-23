@@ -101,6 +101,8 @@ namespace Maths
 
 	float RandFloat(float min, float max)
 	{
+		srand(time(NULL));
+
 		float result = min;
 		float dif = max - min;
 
@@ -113,6 +115,34 @@ namespace Maths
 
 	int RandInt(int min, int max)
 	{
+		srand(time(NULL));
+
+		int result = min;
+		int dif = max - min;
+
+		result += (rand() % dif);
+
+		return result;
+	}
+
+	float RandFloatSeeded(float min, float max, int seed)
+	{
+		srand(seed);
+
+		float result = min;
+		float dif = max - min;
+
+		float mult = (float)(rand() % 10000) / 10000.0f;
+
+		result += dif * mult;
+
+		return result;
+	}
+
+	int RandIntSeeded(int min, int max, int seed)
+	{
+		srand(seed);
+
 		int result = min;
 		int dif = max - min;
 

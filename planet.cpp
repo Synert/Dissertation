@@ -39,7 +39,7 @@ void Planet::Setup(XMFLOAT3 position, float size, XMFLOAT3 perlin, XMFLOAT4 sky,
 	_pos -= _spos;
 	_pos = XMVector3Length(_pos);
 	XMStoreFloat(&p_distance, _pos);
-	p_distance *= 300000.0f;
+	p_distance *= 200000.0f;
 	float albedo = 0.0f;
 
 	m_temp = star.temperature * powf(1.0f - albedo, 0.25f) * powf(star.radius / (2.0f * p_distance), 0.5f);
@@ -186,6 +186,11 @@ float Planet::GetSize()
 float Planet::GetTemperature()
 {
 	return m_temp;
+}
+
+float Planet::GetWaterHeight()
+{
+	return m_waterHeight;
 }
 
 XMFLOAT3 Planet::GetPerlin()

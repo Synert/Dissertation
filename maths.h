@@ -28,4 +28,7 @@ namespace Maths
 
 	float RandFloat(float min, float max);
 	int RandInt(int min, int max);
+
+	float RandFloatSeeded(float min, float max, int seed);
+	int RandIntSeeded(int min, int max, int seed);
 }

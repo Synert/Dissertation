@@ -1,19 +1,44 @@
-﻿  mapping.cpp
-c:\users\connor\uni\dissertation\dissertation\noiseutils.h(1217): warning C4244: 'initializing': conversion from 'const double' to 'float', possible loss of data
-c:\users\connor\uni\dissertation\dissertation\mapping.cpp(41): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\users\connor\uni\dissertation\dissertation\mapping.cpp(52): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-c:\users\connor\uni\dissertation\dissertation\mapping.cpp(91): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\users\connor\uni\dissertation\dissertation\mapping.cpp(121): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\users\connor\uni\dissertation\dissertation\mapping.cpp(132): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-c:\users\connor\uni\dissertation\dissertation\mapping.cpp(189): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\users\connor\uni\dissertation\dissertation\mapping.cpp(200): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-c:\users\connor\uni\dissertation\dissertation\mapping.cpp(250): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+﻿  maths.cpp
+c:\users\connor\git\dissertation\maths.cpp(104): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+c:\users\connor\git\dissertation\maths.cpp(118): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+  mapping.cpp
+c:\users\connor\git\dissertation\noiseutils.h(1217): warning C4244: 'initializing': conversion from 'const double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(66): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(67): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(74): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(114): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(125): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(173): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(283): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(289): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(317): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(326): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(337): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(355): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(380): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(381): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(397): warning C4305: '+=': truncation from 'double' to 'float'
+  graphicsclass.cpp
+c:\users\connor\git\dissertation\noiseutils.h(1217): warning C4244: 'initializing': conversion from 'const double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\graphicsclass.cpp(94): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+c:\users\connor\git\dissertation\graphicsclass.cpp(96): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+c:\users\connor\git\dissertation\graphicsclass.cpp(72): warning C4101: 'result': unreferenced local variable
+c:\users\connor\git\dissertation\graphicsclass.cpp(159): warning C4101: 'result': unreferenced local variable
+c:\users\connor\git\dissertation\graphicsclass.cpp(307): warning C4101: 'result': unreferenced local variable
+c:\users\connor\git\dissertation\graphicsclass.cpp(331): warning C4305: 'initializing': truncation from '__int64' to 'float'
+c:\users\connor\git\dissertation\graphicsclass.cpp(831): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+c:\users\connor\git\dissertation\graphicsclass.cpp(838): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+c:\users\connor\git\dissertation\graphicsclass.cpp(1483): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+  Generating Code...
   LibNoise64.lib(modulebase.obj) : MSIL .netmodule or module compiled with /GL found; restarting link with /LTCG; add /LTCG to the link command line to improve linker performance
 LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
 LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
   Generating code
   Finished generating code
-LibNoise64.lib(modulebase.obj) : warning LNK4099: PDB 'LibNoise64.pdb' was not found with 'LibNoise64.lib(modulebase.obj)' or at 'C:\Users\Connor\Uni\Dissertation\Dissertation\x64\Debug\LibNoise64.pdb'; linking object as if no debug info
-LibNoise64.lib(perlin.obj) : warning LNK4099: PDB 'LibNoise64.pdb' was not found with 'LibNoise64.lib(perlin.obj)' or at 'C:\Users\Connor\Uni\Dissertation\Dissertation\x64\Debug\LibNoise64.pdb'; linking object as if no debug info
-LibNoise64.lib(noisegen.obj) : warning LNK4099: PDB 'LibNoise64.pdb' was not found with 'LibNoise64.lib(noisegen.obj)' or at 'C:\Users\Connor\Uni\Dissertation\Dissertation\x64\Debug\LibNoise64.pdb'; linking object as if no debug info
-  Dissertation.vcxproj -> C:\Users\Connor\Uni\Dissertation\Dissertation\x64\Debug\Dissertation.exe
+LibNoise64.lib(modulebase.obj) : warning LNK4099: PDB 'LibNoise64.pdb' was not found with 'LibNoise64.lib(modulebase.obj)' or at 'C:\Users\Connor\git\Dissertation\x64\Debug\LibNoise64.pdb'; linking object as if no debug info
+LibNoise64.lib(perlin.obj) : warning LNK4099: PDB 'LibNoise64.pdb' was not found with 'LibNoise64.lib(perlin.obj)' or at 'C:\Users\Connor\git\Dissertation\x64\Debug\LibNoise64.pdb'; linking object as if no debug info
+LibNoise64.lib(billow.obj) : warning LNK4099: PDB 'LibNoise64.pdb' was not found with 'LibNoise64.lib(billow.obj)' or at 'C:\Users\Connor\git\Dissertation\x64\Debug\LibNoise64.pdb'; linking object as if no debug info
+LibNoise64.lib(blend.obj) : warning LNK4099: PDB 'LibNoise64.pdb' was not found with 'LibNoise64.lib(blend.obj)' or at 'C:\Users\Connor\git\Dissertation\x64\Debug\LibNoise64.pdb'; linking object as if no debug info
+LibNoise64.lib(ridgedmulti.obj) : warning LNK4099: PDB 'LibNoise64.pdb' was not found with 'LibNoise64.lib(ridgedmulti.obj)' or at 'C:\Users\Connor\git\Dissertation\x64\Debug\LibNoise64.pdb'; linking object as if no debug info
+LibNoise64.lib(noisegen.obj) : warning LNK4099: PDB 'LibNoise64.pdb' was not found with 'LibNoise64.lib(noisegen.obj)' or at 'C:\Users\Connor\git\Dissertation\x64\Debug\LibNoise64.pdb'; linking object as if no debug info
+  Dissertation.vcxproj -> C:\Users\Connor\git\Dissertation\x64\Debug\Dissertation.exe

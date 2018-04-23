@@ -1625,26 +1625,26 @@ void GraphicsClass::RemakeSystem()
 		Planet* new_planet;
 		new_planet = new Planet();
 
-		z += RandFloat(100.0f, 130.0f);
+		z += RandFloatSeeded(100.0f, 130.0f, rand());
 
 		XMFLOAT3 newPos = XMFLOAT3(0, 0, z);
 
-		angle += RandFloat(45.0f, 95.0f);
+		angle += RandFloatSeeded(45.0f, 95.0f, rand());
 
 		XMMATRIX rotMat = XMMatrixRotationY(angle * 0.0174532925f);
 		XMVECTOR tempPos = XMLoadFloat3(&newPos);
 		tempPos = XMVector3TransformCoord(tempPos, rotMat);
 		XMStoreFloat3(&newPos, tempPos);
 
-		float pX = RandFloat(-500.0f, 500.0f);
-		float pY = RandFloat(-500.0f, 500.0f);
-		float pZ = RandFloat(-500.0f, 500.0f);
+		float pX = RandFloatSeeded(-500.0f, 500.0f, rand());
+		float pY = RandFloatSeeded(-500.0f, 500.0f, rand());
+		float pZ = RandFloatSeeded(-500.0f, 500.0f, rand());
 
-		float sX = RandFloat(0.0f, 1.0f);
-		float sY = RandFloat(0.0f, 1.0f);
-		float sZ = RandFloat(0.0f, 1.0f);
+		float sX = RandFloatSeeded(0.0f, 1.0f, rand());
+		float sY = RandFloatSeeded(0.0f, 1.0f, rand());
+		float sZ = RandFloatSeeded(0.0f, 1.0f, rand());
 
-		new_planet->Initialize(Maths::AddFloat3(m_star->GetParam().pos, newPos), RandFloat(20.0f, 50.0f), XMFLOAT3(pX, pY, pZ),
+		new_planet->Initialize(Maths::AddFloat3(m_star->GetParam().pos, newPos), RandFloatSeeded(20.0f, 50.0f, rand()), XMFLOAT3(pX, pY, pZ),
 			XMFLOAT4(sX, sY, sZ, 1.0f), m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), m_star->GetParam(), m_hiresMap);
 		m_planets.push_back(new_planet);
 	}
@@ -1680,7 +1680,7 @@ void GraphicsClass::SetTweakBar(TwBar* bar)
 	TwAddSeparator(bar, "", NULL);
 
 	TwAddVarRO(bar, "Triangle count", TW_TYPE_INT32, &triCount, " ");
-	TwAddButton(bar, "Remake planet", MakePlanet, this, " ");
+	TwAddButton(bar, "Remake system", MakePlanet, this, " ");
 
 	TwAddButton(bar, "Click and hold to pan view", NULL, NULL, NULL);
 	TwAddButton(bar, "WASD to move", NULL, NULL, NULL);

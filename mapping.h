@@ -52,6 +52,7 @@ private:
 	bool h_built = false;
 	bool h_building = false;
 	bool cancel = false;
+	int h_finished = 0;
 
 	void* m_planet;
 };

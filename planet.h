@@ -21,6 +21,7 @@ public:
 	XMFLOAT3 GetPosition();
 	float GetSize();
 	float GetTemperature();
+	float GetWaterHeight();
 	XMFLOAT3 GetPerlin();
 	bool Built();
 
@@ -42,6 +43,8 @@ private:
 	int h_res;
 	bool h_built;
 	bool hires;
+
+	float m_waterHeight;
 
 	Mapping* m_map;
 	//Mapping* hires_map;

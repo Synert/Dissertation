@@ -121,9 +121,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="color.psh">
-      <Filter>Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="color.vsh">
       <Filter>Shaders</Filter>
     </FxCompile>
@@ -131,6 +128,9 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="texture.vsh">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="color.psh">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
