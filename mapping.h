@@ -28,11 +28,11 @@ class Mapping
 public:
 	Mapping();
 
-	void Setup(int _hres, float m_temp, XMFLOAT3 perlin);
-	void CreateMaps(int _hres, float m_temp, XMFLOAT3 perlin);
-	void CreateHeightMap(float m_temp, XMFLOAT3 perlin);
-	void HeightmapThread(int z, float temp, XMFLOAT3 perlin);
-	void Shutdown();
+	void Setup(int _hres, float m_temp, XMFLOAT3 perlin, float waterHeight, float flatten);
+	void CreateMaps(int _hres, float m_temp, XMFLOAT3 perlin, float waterHeight, float flatten);
+	void CreateHeightMap(float m_temp, XMFLOAT3 perlin, float waterHeight, float flatten);
+	void HeightmapThread(int z, float temp, XMFLOAT3 perlin, float waterHeight, float flatten);
+	bool Shutdown();
 	float GetHeightMapValue(int face, int x, int y);
 	float GetHeightMapValueFloat(int face, float xCoordFloat, float yCoordFloat);
 	XMFLOAT3 GetColorMapValue(int face, int x, int y);
@@ -42,6 +42,9 @@ public:
 	void Cancel();
 	bool Cancelled();
 
+	XMFLOAT3 Blend(XMFLOAT3 a, XMFLOAT3 b);
+
+	float GetWaterHeight();
 	void SetPlanet(void* planet);
 	void* CurrentPlanet();
 private:
@@ -54,5 +57,6 @@ private:
 	bool cancel = false;
 	int h_finished = 0;
 
+	float m_waterHeight;
 	void* m_planet;
 };

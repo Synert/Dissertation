@@ -51,7 +51,7 @@ public:
 		int divide, Mapping* map, Mapping* hires, void* planet);
 	void MakeFace(ID3D11Device* device, ID3D11DeviceContext* context);
 	int GetIndexCount(float distance);
-	void Shutdown();
+	bool Shutdown();
 
 	std::list<ModelClass*> GetModels(XMFLOAT3 camPos, ID3D11Device* device, ID3D11DeviceContext* context);
 

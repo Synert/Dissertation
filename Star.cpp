@@ -171,7 +171,6 @@ void Star::Initialize(ID3D11Device* device, ID3D11DeviceContext* context, StarPa
 		vertexList[indexList[i + 2]].normal = normal;
 	}
 
-	ModelClass *newModel = new ModelClass();
 	TexParam temp;
 	temp.type = GenType::NONE;
 	m_model = new ModelClass;
@@ -200,5 +199,6 @@ XMFLOAT4 Star::GetColor()
 
 void Star::Shutdown()
 {
+	m_model->Shutdown();
 	delete m_model;
 }

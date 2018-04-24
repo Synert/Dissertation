@@ -69,6 +69,19 @@ struct Parameters
 	int recursion;
 };
 
+struct PlanetParam
+{
+	float p_temperature;
+	XMFLOAT4 p_sky;
+	XMFLOAT3 p_seed;
+	XMFLOAT3 p_position;
+	float p_size;
+	float p_flat;
+
+	float m_waterHeight;
+	XMFLOAT3 m_seed;
+};
+
 class GraphicsClass
 {
 public:
@@ -82,6 +95,7 @@ public:
 	void SetTweakBar(TwBar* bar);
 
 	//generation functions
+	//this is left over from a previous assignment
 	void CreateCube(Transform transform);
 	void CreateSphere(Transform transform, int divide);
 	void CreateTriangle(Transform transform);
@@ -91,8 +105,12 @@ public:
 	Transform CreateTrunk(Transform transform, Parameters param, int recursion);
 	void CreateBush(Transform transform, Parameters param);
 	void CreateTree(Transform transform, Parameters param);
+
 	void QueueRemake();
 	void RemakeSystem();
+	void QueueRemakePlanet();
+
+	void RemakePlanet();
 
 	void PopModel(bool clearAll);
 	void ExportModel();
@@ -114,6 +132,14 @@ public:
 
 	string export_path;
 
+	StarParam starParam;
+	bool randomStar = true;
+	bool randomPlanets = true;
+	int numPlanets = 10;
+	PlanetParam planetParam;
+
+	bool remakingPlanet = false;
+
 private:
 	bool Render(TwBar* bar);
 
@@ -131,6 +157,6 @@ private:
 	bool remaking = false;
 
 	Planet* builtPlanet;
-
+	Planet* m_remakingPlanet;
 	Mapping* m_hiresMap;
 };

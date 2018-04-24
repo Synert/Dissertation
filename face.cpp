@@ -270,6 +270,10 @@ void Face::MakeFace(ID3D11Device* device, ID3D11DeviceContext* context)
 			int h_res = m_map->GetHeightMapRes();
 			//int n_res = m_map->GetNormalMapRes();
 
+			if (m_map->Cancelled()) return;
+			if (m_map == NULL) return;
+			if (m_map == nullptr) return;
+
 			float xCoordFloat = ((min(max(tempCoord.x, -1.0f), 1.0f) + 1.0f) / 2.0f) * (float)(h_res - 1);
 			float yCoordFloat = ((min(max(tempCoord.y, -1.0f), 1.0f) + 1.0f) / 2.0f) * (float)(h_res - 1);
 			float value = m_map->GetHeightMapValueFloat(faceDir, xCoordFloat, yCoordFloat);
@@ -643,19 +647,19 @@ XMFLOAT3 Face::GetPos()
 	return m_pos;
 }
 
-void Face::Shutdown()
+bool Face::Shutdown()
 {
 	for (int i = 0; i < 4; i++)
 	{
-		if (m_children[i] != NULL)
+		if (m_children[i])
 		{
-			m_children[i]->Shutdown();
+			if(!m_children[i]->Shutdown()) return false;
 			delete m_children[i];
 			m_children[i] = 0;
 		}
 	}
 
-	if (m_model != NULL)
+	if (m_model)
 	{
 		m_model->Shutdown();
 		delete m_model;
@@ -664,6 +668,8 @@ void Face::Shutdown()
 
 	created = false;
 	creating = false;
+
+	return true;
 
 	//delete lowres_map;
 	//delete hires_map;

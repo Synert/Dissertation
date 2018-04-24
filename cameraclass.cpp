@@ -137,8 +137,9 @@ void CameraClass::GetViewMatrix(XMMATRIX& viewMatrix)
 
 void CameraClass::SetTweakBar(TwBar* bar)
 {
-	TwAddVarRO(bar, "camPosX", TW_TYPE_FLOAT, &m_positionX, " precision=1 ");
-	TwAddVarRO(bar, "camPosY", TW_TYPE_FLOAT, &m_positionY, " precision=1 ");
-	TwAddVarRO(bar, "camPosZ", TW_TYPE_FLOAT, &m_positionZ, " precision=1 ");
-	TwAddVarRO(bar, "forward", TW_TYPE_DIR3F, &m_forward, " ");
+	TwAddVarRO(bar, "camPosX", TW_TYPE_FLOAT, &m_positionX, " precision=1 group='Debug info' ");
+	TwAddVarRO(bar, "camPosY", TW_TYPE_FLOAT, &m_positionY, " precision=1 group='Debug info' ");
+	TwAddVarRO(bar, "camPosZ", TW_TYPE_FLOAT, &m_positionZ, " precision=1 group='Debug info' ");
+
+	TwDefine(" Options/'Debug info' opened=false ");
 }

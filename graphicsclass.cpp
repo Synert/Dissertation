@@ -161,6 +161,11 @@ bool GraphicsClass::Render(TwBar* bar)
 	if (remaking)
 	{
 		RemakeSystem();
+		return true;
+	}
+	if (remakingPlanet)
+	{
+		RemakePlanet();
 	}
 
 	// Clear the buffers to begin the scene.
@@ -169,23 +174,29 @@ bool GraphicsClass::Render(TwBar* bar)
 
 	XMFLOAT4 tempCol = COL_BLACK;
 	Planet* closest = NULL;
+	int planetID = 0;
 	float distance = 9999999999999.0f;
-	for each(Planet* planet in m_planets)
+
+	for (int i = 0; i < m_planets.size(); i++)
 	{
-		XMVECTOR _pos = XMLoadFloat3(&m_Camera->GetPosition());
-		XMVECTOR _spos = XMLoadFloat3(&planet->GetPosition());
-		float p_distance;
-		_pos -= _spos;
-		_pos = XMVector3Length(_pos);
-		XMStoreFloat(&p_distance, _pos);
-		if (planet->DrawSky(m_Camera->GetPosition()))
+		if (m_planets[i]->Built())
 		{
-			tempCol = planet->GetSky();
-		}
-		if (p_distance < distance)
-		{
-			distance = p_distance;
-			closest = planet;
+			XMVECTOR _pos = XMLoadFloat3(&m_Camera->GetPosition());
+			XMVECTOR _spos = XMLoadFloat3(&m_planets[i]->GetPosition());
+			float p_distance;
+			_pos -= _spos;
+			_pos = XMVector3Length(_pos);
+			XMStoreFloat(&p_distance, _pos);
+			if (m_planets[i]->DrawSky(m_Camera->GetPosition()))
+			{
+				tempCol = m_planets[i]->GetSky();
+			}
+			if (p_distance < distance)
+			{
+				distance = p_distance;
+				closest = m_planets[i];
+				planetID = i;
+			}
 		}
 	}
 
@@ -197,11 +208,22 @@ bool GraphicsClass::Render(TwBar* bar)
 			m_hiresMap->Cancel();
 			m_hiresMap->Shutdown();
 			m_hiresMap->SetPlanet(NULL);
+
+			planetParam.m_waterHeight = closest->GetWaterHeight();
+			planetParam.p_size = closest->GetSize();
+			planetParam.p_sky = closest->GetUnscaledSky();
+			planetParam.p_position = closest->GetPosition();
+			planetParam.p_seed = closest->GetPerlin();
+			planetParam.p_temperature = closest->GetTemperature();
+
+			planetParam.m_seed = closest->GetMapPerlin();
+			planetParam.p_flat = closest->GetFlat();
+
 		}
 		if (!m_hiresMap->IsBuilding())
 		{
 			//create the hires map here
-			m_hiresMap->Setup(1024, closest->GetTemperature(), closest->GetPerlin());
+			m_hiresMap->Setup(1024, closest->GetTemperature(), closest->GetMapPerlin(), closest->GetWaterHeight(), closest->GetFlat());
 			m_hiresMap->SetPlanet(closest);
 			builtPlanet = closest;
 		}
@@ -346,6 +368,8 @@ float GraphicsClass::GetSpeed(XMFLOAT3 position)
 			closest = planet;
 		}
 	}
+
+	if (closest == NULL) return 0.5f;
 
 	float base = 0.5f;
 	lowest /= (closest->GetSize() * base * 10.0f);
@@ -1586,19 +1610,36 @@ void GraphicsClass::QueueRemake()
 
 void GraphicsClass::RemakeSystem()
 {
+	m_hiresMap->Shutdown();
+
 	for each(Planet* planet in m_planets)
 	{
-		if (!planet->Built()) return;
+		if (!planet->Built())
+		{
+			remaking = true;
+			return;
+		}
 	}
 
 	remaking = false;
 
-	for each(Planet* planet in m_planets)
+	for(int i = 0; i < m_planets.size(); i++)
 	{
-		planet->Shutdown();
-		delete planet;
+		if (!m_planets[i]->Shutdown())
+		{
+			remaking = true;
+			return;
+		}
+		delete m_planets[i];
 	}
 	m_planets.clear();
+
+	StarParam new_star;
+
+	if (!randomStar)
+	{
+		new_star = starParam;
+	}
 
 	if (m_star)
 	{
@@ -1606,24 +1647,29 @@ void GraphicsClass::RemakeSystem()
 		delete m_star;
 	}
 
-	m_hiresMap->Shutdown();
+	//delete m_hiresMap;
 
-	m_star = new Star;
-	StarParam new_star;
-	new_star.pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	new_star.temperature = Maths::RandFloat(2000.0f, 10000.0f); //6000.0f;
-	new_star.radius = Maths::RandFloat(700000.0f, 1000000.0f); //700000.0f;
+	//m_hiresMap = new Mapping();
+
+	m_star = new Star();
+	if (randomStar)
+	{
+		new_star.pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
+		new_star.temperature = Maths::RandFloat(2000.0f, 10000.0f); //6000.0f;
+		new_star.radius = Maths::RandFloat(700000.0f, 1000000.0f); //700000.0f;
+	}
 	m_star->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), new_star);
+
+	starParam = new_star;
 
 	m_light->SetLightDiffuse(m_star->GetColor());
 
 	float angle = 0.0f;
 	float z = 0.0f;
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < numPlanets; i++)
 	{
-		Planet* new_planet;
-		new_planet = new Planet();
+		Planet* new_planet = new Planet();
 
 		z += RandFloatSeeded(100.0f, 130.0f, rand());
 
@@ -1644,10 +1690,47 @@ void GraphicsClass::RemakeSystem()
 		float sY = RandFloatSeeded(0.0f, 1.0f, rand());
 		float sZ = RandFloatSeeded(0.0f, 1.0f, rand());
 
-		new_planet->Initialize(Maths::AddFloat3(m_star->GetParam().pos, newPos), RandFloatSeeded(20.0f, 50.0f, rand()), XMFLOAT3(pX, pY, pZ),
-			XMFLOAT4(sX, sY, sZ, 1.0f), m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), m_star->GetParam(), m_hiresMap);
+		float waterHeight = Maths::RandIntSeeded(0, 100, (int)(pX + pY + pZ));
+		waterHeight /= 100.0f;
+
+		float flatten = Maths::RandFloatSeeded(1.5f, 4.5f, pX + pY + pZ);
+
+		new_planet->Initialize(Maths::AddFloat3(m_star->GetParam().pos, newPos), RandFloatSeeded(20.0f, 50.0f, rand()), XMFLOAT3(pX, pY, pZ), XMFLOAT3(pX, pY, pZ),
+			XMFLOAT4(sX, sY, sZ, 1.0f), m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), m_star->GetParam(), m_hiresMap, waterHeight, flatten, -1);
 		m_planets.push_back(new_planet);
 	}
+}
+
+void GraphicsClass::RemakePlanet()
+{
+	if (!m_remakingPlanet->Built()) return;
+
+	remakingPlanet = false;
+
+	if (!m_remakingPlanet->Shutdown())
+	{
+		remakingPlanet = true;
+		return;
+	}
+
+	//delete m_remakingPlanet;
+
+	//Planet* newPlanet = new Planet();
+
+	m_remakingPlanet->Initialize(planetParam.p_position, planetParam.p_size, planetParam.p_seed, planetParam.m_seed, planetParam.p_sky, m_Direct3D->GetDevice(),
+		m_Direct3D->GetDeviceContext(), m_star->GetParam(), m_hiresMap, planetParam.m_waterHeight, planetParam.p_flat, planetParam.p_temperature);
+
+	//m_remakingPlanet = newPlanet;
+
+	builtPlanet = NULL;
+}
+
+void GraphicsClass::QueueRemakePlanet()
+{
+	if (builtPlanet == NULL) return;
+	m_remakingPlanet = builtPlanet;
+
+	remakingPlanet = true;
 }
 
 void TW_CALL Trunk(void *p)
@@ -1657,10 +1740,16 @@ void TW_CALL Trunk(void *p)
 	parent->CreateTrunk(parent->new_transform, parent->trunk_param, parent->trunk_param.recursion);
 }
 
-void TW_CALL MakePlanet(void *p)
+void TW_CALL MakeSystem(void *p)
 {
 	GraphicsClass* parent = static_cast<GraphicsClass*>(p);
 	parent->RemakeSystem();
+}
+
+void TW_CALL MakePlanet(void *p)
+{
+	GraphicsClass* parent = static_cast<GraphicsClass*>(p);
+	parent->QueueRemakePlanet();
 }
 
 void TW_CALL CopyStdStringToClient(std::string& destinationClientString, const std::string& sourceLibraryString)
@@ -1673,18 +1762,48 @@ void GraphicsClass::SetTweakBar(TwBar* bar)
 {
 	TwCopyStdStringToClientFunc(CopyStdStringToClient);
 
-	TwAddVarRW(bar, "Light ambient", TW_TYPE_COLOR4F, &m_light->m_light.ambientColor, " group='Light settings' ");
-	TwAddVarRW(bar, "Light diffuse", TW_TYPE_COLOR4F, &m_light->m_light.diffuseColor, " group='Light settings' ");
-	TwAddVarRW(bar, "Light direction", TW_TYPE_DIR3F, &m_light->m_light.lightDirection, " group='Light settings' ");
+	TwAddVarRO(bar, "Triangle count", TW_TYPE_INT32, &triCount, " group='Debug info' ");
 
 	TwAddSeparator(bar, "", NULL);
 
-	TwAddVarRO(bar, "Triangle count", TW_TYPE_INT32, &triCount, " ");
-	TwAddButton(bar, "Remake system", MakePlanet, this, " ");
+	//sun settings
+	TwAddVarRW(bar, "Star temp", TW_TYPE_FLOAT, &starParam.temperature, " min=1000 max=10000 group='Star settings' ");
+	TwAddVarRW(bar, "Star radius", TW_TYPE_FLOAT, &starParam.radius, " min=500000 max=1000000 group='Star settings' ");
+	TwAddVarRW(bar, "Random star", TW_TYPE_BOOLCPP, &randomStar, " group='Star settings' ");
+
+	//planet settings
+	TwAddButton(bar, "Remake planet", MakePlanet, this, " group='Planet settings'");
+	TwAddVarRW(bar, "Temperature", TW_TYPE_FLOAT, &planetParam.p_temperature, " min=0 max=3000 group='Planet settings' ");
+	TwAddVarRW(bar, "Radius", TW_TYPE_FLOAT, &planetParam.p_size, " min=10 max=60 group='Planet settings' ");
+	TwAddVarRW(bar, "Sky", TW_TYPE_COLOR3F, &planetParam.p_sky, " group='Planet settings' ");
+	TwAddVarRW(bar, "Terrain height", TW_TYPE_FLOAT, &planetParam.p_flat, " min=0.5 max=9.5 step=0.1 group='Planet settings' ");
+	TwAddVarRW(bar, "Seed X", TW_TYPE_FLOAT, &planetParam.p_seed.x, " group='Seed' ");
+	TwAddVarRW(bar, "Seed Y", TW_TYPE_FLOAT, &planetParam.p_seed.y, " group='Seed' ");
+	TwAddVarRW(bar, "Seed Z", TW_TYPE_FLOAT, &planetParam.p_seed.z, " group='Seed' ");
+	TwAddVarRW(bar, "Map seed X", TW_TYPE_FLOAT, &planetParam.m_seed.x, " group='Seed' ");
+	TwAddVarRW(bar, "Map seed Y", TW_TYPE_FLOAT, &planetParam.m_seed.y, " group='Seed' ");
+	TwAddVarRW(bar, "Map seed Z", TW_TYPE_FLOAT, &planetParam.m_seed.z, " group='Seed' ");
+	TwAddVarRW(bar, "Pos X", TW_TYPE_FLOAT, &planetParam.p_position.x, " group='Position' ");
+	TwAddVarRW(bar, "Pos Y", TW_TYPE_FLOAT, &planetParam.p_position.y, " group='Position' ");
+	TwAddVarRW(bar, "Pos Z", TW_TYPE_FLOAT, &planetParam.p_position.z, " group='Position' ");
+	TwAddVarRW(bar, "Water height", TW_TYPE_FLOAT, &planetParam.m_waterHeight, " min=0.0 max=1.0 step=0.01 group='Planet settings' ");
+
+	TwDefine(" Options/'Position'   group='Planet settings' ");
+	TwDefine(" Options/'Seed'   group='Planet settings' ");
+	TwDefine(" Options/'Random'   group='Planet settings' ");
+
+	TwAddSeparator(bar, "NewSep", NULL);
+
+	TwAddVarRW(bar, "Planet count", TW_TYPE_INT32, &numPlanets, " min=1 max=20 ");
+	TwAddButton(bar, "Remake system", MakeSystem, this, " ");
 
 	TwAddButton(bar, "Click and hold to pan view", NULL, NULL, NULL);
-	TwAddButton(bar, "WASD to move", NULL, NULL, NULL);
+	TwAddButton(bar, "WASD to move, SHIFT for speed", NULL, NULL, NULL);
 	TwAddButton(bar, "SPACE/CTRL for height", NULL, NULL, NULL);
 
-	TwDefine(" Options/'Light settings' opened=false ");
+	TwDefine(" Options/'Star settings' opened=false ");
+	TwDefine(" Options/'Planet settings' opened=false ");
+	TwDefine(" Options/'Seed' opened=false ");
+	TwDefine(" Options/'Position' opened=false ");
+	TwDefine(" Options/'Random' opened=false ");
 }

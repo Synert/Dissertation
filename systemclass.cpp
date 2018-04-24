@@ -81,7 +81,7 @@ bool SystemClass::Initialize()
 	m_Bar = TwNewBar("Options");
 
 	m_Camera->SetTweakBar(m_Bar);
-	TwAddSeparator(m_Bar, "NewSep", NULL);
+	//TwAddSeparator(m_Bar, "NewSep", NULL);
 
 	m_Graphics->SetTweakBar(m_Bar);
 	TwAddSeparator(m_Bar, "NewSep2", NULL);
@@ -466,7 +466,7 @@ void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
 	m_hinstance = GetModuleHandle(NULL);
 
 	// Give the application a name.
-	m_applicationName = "Procedural ATP";
+	m_applicationName = "Not No Man's Sky";
 
 	// Setup the windows class with default settings.
 	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;

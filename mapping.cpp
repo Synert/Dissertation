@@ -6,36 +6,41 @@ Mapping::Mapping()
 	h_building = false;
 }
 
-void Mapping::Setup(int _hres, float m_temp, XMFLOAT3 perlin)
+void Mapping::Setup(int _hres, float m_temp, XMFLOAT3 perlin, float waterHeight, float flatten)
 {
+	if (h_building) return;
 	if (h_built)
 	{
 		Shutdown();
 	}
 	h_building = true;
 	cancel = false;
-	std::thread new_thread(&Mapping::CreateMaps, this, _hres, m_temp, perlin);
+
+	h_map = NULL;
+	c_map = NULL;
+
+	std::thread new_thread(&Mapping::CreateMaps, this, _hres, m_temp, perlin, waterHeight, flatten);
 	new_thread.detach();
+	//new_thread.join();
 }
 
-void Mapping::CreateMaps(int _hres, float m_temp, XMFLOAT3 perlin)
+void Mapping::CreateMaps(int _hres, float m_temp, XMFLOAT3 perlin, float waterHeight, float flatten)
 {
 	h_res = _hres;
 	c_map = new XMFLOAT3[6 * h_res * h_res];
 	h_map = new float[6 * h_res * h_res];
-
-	CreateHeightMap(m_temp, perlin);
+	CreateHeightMap(m_temp, perlin, waterHeight, flatten);
 }
 
-void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin)
+void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin, float waterHeight, float flatten)
 {
 	h_finished = 0;
-	std::thread new_thread1(&Mapping::HeightmapThread, this, 0, m_temp, perlin);
-	std::thread new_thread2(&Mapping::HeightmapThread, this, 1, m_temp, perlin);
-	std::thread new_thread3(&Mapping::HeightmapThread, this, 2, m_temp, perlin);
-	std::thread new_thread4(&Mapping::HeightmapThread, this, 3, m_temp, perlin);
-	std::thread new_thread5(&Mapping::HeightmapThread, this, 4, m_temp, perlin);
-	std::thread new_thread6(&Mapping::HeightmapThread, this, 5, m_temp, perlin);
+	std::thread new_thread1(&Mapping::HeightmapThread, this, 0, m_temp, perlin, waterHeight, flatten);
+	std::thread new_thread2(&Mapping::HeightmapThread, this, 1, m_temp, perlin, waterHeight, flatten);
+	std::thread new_thread3(&Mapping::HeightmapThread, this, 2, m_temp, perlin, waterHeight, flatten);
+	std::thread new_thread4(&Mapping::HeightmapThread, this, 3, m_temp, perlin, waterHeight, flatten);
+	std::thread new_thread5(&Mapping::HeightmapThread, this, 4, m_temp, perlin, waterHeight, flatten);
+	std::thread new_thread6(&Mapping::HeightmapThread, this, 5, m_temp, perlin, waterHeight, flatten);
 	new_thread1.join();
 	new_thread2.join();
 	new_thread3.join();
@@ -47,7 +52,7 @@ void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin)
 	cancel = false;
 }
 
-void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin)
+void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, float waterHeight, float flatten)
 {
 	module::Perlin perlinModule, waterModule, terrainPicker;
 	module::RidgedMulti altModule;
@@ -72,8 +77,8 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin)
 
 	float pScale = 0.75f;
 	XMFLOAT3 perlinScale = XMFLOAT3(pScale, pScale, pScale);
-	float waterHeight = Maths::RandIntSeeded(0, 100, (int)(perlin.x + perlin.y + perlin.z)); 
-	waterHeight /= 100.0f;
+
+	m_waterHeight = waterHeight;
 	//float waterHeight = 0.27f;
 
 	//experimental texture loading
@@ -103,13 +108,6 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin)
 	{
 		for (int y = 0; y < h_res; y++)
 		{
-			if (cancel)
-			{
-				h_building = false;
-				h_finished++;
-				return;
-			}
-
 			XMFLOAT3 coord;
 
 			int tempZ = -1.0f;
@@ -325,7 +323,7 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin)
 			else if (value < waterHeight && m_temp <= 373.2f && m_temp >= 273.2f)
 			{
 				waterColor = 1.0f - (abs(value - waterHeight) * 2.0f) / waterHeight;
-				waterColor /= 4.0f;
+				waterColor /= 2.0f;
 				//waterColor /= waterHeight;
 				//waterColor = waterHeight - waterColor;
 				//waterColor *= 0.5f;
@@ -350,8 +348,11 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin)
 
 			//now move that between 1 and 0.15
 			float newValue = (float)value;
-			newValue *= 3.5f;
-			newValue += 6.5f;
+
+			float minSize = flatten;
+
+			newValue *= minSize;
+			newValue += (10.0f - minSize);
 			newValue /= 30.0f;
 
 			float tempScale = 1.0f - (value / 2.5f);
@@ -364,14 +365,25 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin)
 			//col = XMFLOAT3((0.8f - value * 0.8f), (value * 0.7f), 0.5f);
 			XMFLOAT3 col = finalCol;
 
+			//base color
+			XMFLOAT3 waterCol = XMFLOAT3(0.0f, 0.2f, 0.8f);
+			
+			//blend with sky- need access to planet first! pass as parameter?
+			//waterCol = Blend(waterCol, sky)
+
 			//col = XMFLOAT4(1.0f - value, 0, value, 1.0f);
 			//it->color = XMFLOAT4((temperature * tempScale) / 3000.0f, 0.0f, 1.0f - (temperature * tempScale) / 3000.0f, 1.0f);
 			if (water)
 			{
+				col = Maths::AddFloat3(col, Maths::one);
+				col = Maths::ScalarFloat3(col, 0.5f);
 				col = Maths::ScalarFloat3(col, waterColor);
+
 				//col.z += 0.25 * (waterColor - waterHeight);
-				col.z += 0.35f;
-				col = Maths::ScalarFloat3(col, 0.65f);
+				col.z += 0.5f;
+				col = Maths::ScalarFloat3(col, 0.5f);
+				//col = Blend(col, waterCol);
+				//col = Blend(col, waterCol);
 			}
 			if (lava)
 			{
@@ -398,33 +410,51 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin)
 				col.z += 0.45;
 			}
 
+			if (cancel)
+			{
+				//h_building = false;
+				//h_finished++;
+				//return;
+			}
+
+			if (h_map == NULL)
+			{
+				//h_building = false;
+				//h_finished++;
+				//return;
+			}
+
 			h_map[(z * h_res * h_res) + (y * h_res) + x] = (float)newValue;
 			c_map[(z * h_res * h_res) + (y * h_res) + x] = col;
 			//c_map[(z * h_res * h_res) + (y * h_res) + x] = XMFLOAT3((m_temp * tempScale) / 3000.0f, 0.0f, 1.0f - (m_temp * tempScale) / 3000.0f);
 
 		}
 	}
+
+	delete[] data;
 }
 
-void Mapping::Shutdown()
+bool Mapping::Shutdown()
 {
 	if (h_finished == 6)
 	{
-		h_built = true;
+		//h_built = true;
 	}
+	if (!h_built) return false;
 	if (!h_built && h_building)
 	{
 		cancel = true;
-		return;
+		//return;
 	}
-	if (h_built || h_building)
-	{
-		delete[] h_map;
-		delete[] c_map;
-	}
+	delete[] h_map;
+	delete[] c_map;
+	h_map = NULL;
+	c_map = NULL;
 	h_building = false;
 	h_built = false;
 	h_finished = 0;
+
+	return true;
 }
 
 float Mapping::GetHeightMapValue(int face, int x, int y)
@@ -504,4 +534,44 @@ void Mapping::SetPlanet(void* planet)
 void* Mapping::CurrentPlanet()
 {
 	return m_planet;
+}
+
+XMFLOAT3 Mapping::Blend(XMFLOAT3 a, XMFLOAT3 b)
+{
+
+	XMFLOAT3 result;
+
+	if (b.x < 0.5f)
+	{
+		result.x = (2.0f * a.x * b.x) + (a.x * a.x) * (1.0f - (2.0f * b.x));
+	}
+	else
+	{
+		result.x = (2.0f * a.x) * (1.0f - b.x) + sqrt(a.x) * ((2.0f * b.x) - 1.0f);
+	}
+
+	if (b.y < 0.5f)
+	{
+		result.y = (2.0f * a.y * b.y) + (a.y * a.y) * (1.0f - (2.0f * b.y));
+	}
+	else
+	{
+		result.y = (2.0f * a.y) * (1.0f - b.y) + sqrt(a.y) * ((2.0f * b.y) - 1.0f);
+	}
+
+	if (b.z < 0.5f)
+	{
+		result.x = (2.0f * a.z * b.z) + (a.z * a.z) * (1.0f - (2.0f * b.z));
+	}
+	else
+	{
+		result.x = (2.0f * a.z) * (1.0f - b.z) + sqrt(a.z) * ((2.0f * b.z) - 1.0f);
+	}
+	
+	return result;
+}
+
+float Mapping::GetWaterHeight()
+{
+	return m_waterHeight;
 }

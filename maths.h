@@ -26,6 +26,9 @@ namespace Maths
 	XMVECTOR XMVector3NormalizeRobust(FXMVECTOR V);
 	XMFLOAT3 ComputeNormal(XMFLOAT3 a, XMFLOAT3 b, XMFLOAT3 c);
 
+	XMFLOAT3 Float4To3(XMFLOAT4 in);
+	XMFLOAT4 Float3To4(XMFLOAT3 in);
+
 	float RandFloat(float min, float max);
 	int RandInt(int min, int max);
 

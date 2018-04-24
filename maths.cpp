@@ -150,4 +150,24 @@ namespace Maths
 
 		return result;
 	}
+
+	XMFLOAT3 Float4To3(XMFLOAT4 in)
+	{
+		XMFLOAT3 result;
+		result.x = in.x;
+		result.y = in.y;
+		result.z = in.z;
+
+		return result;
+	}
+
+	XMFLOAT4 Float3To4(XMFLOAT3 in)
+	{
+		XMFLOAT4 result;
+		result.x = in.x;
+		result.y = in.y;
+		result.z = in.z;
+
+		return result;
+	}
 }

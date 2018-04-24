@@ -1,34 +1,48 @@
-﻿  maths.cpp
+﻿  planet.cpp
+c:\users\connor\git\dissertation\noiseutils.h(1217): warning C4244: 'initializing': conversion from 'const double' to 'float', possible loss of data
+  maths.cpp
 c:\users\connor\git\dissertation\maths.cpp(104): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
 c:\users\connor\git\dissertation\maths.cpp(118): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
   mapping.cpp
 c:\users\connor\git\dissertation\noiseutils.h(1217): warning C4244: 'initializing': conversion from 'const double' to 'float', possible loss of data
-c:\users\connor\git\dissertation\mapping.cpp(66): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-c:\users\connor\git\dissertation\mapping.cpp(67): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-c:\users\connor\git\dissertation\mapping.cpp(74): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-c:\users\connor\git\dissertation\mapping.cpp(114): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\users\connor\git\dissertation\mapping.cpp(125): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-c:\users\connor\git\dissertation\mapping.cpp(173): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\users\connor\git\dissertation\mapping.cpp(283): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-c:\users\connor\git\dissertation\mapping.cpp(289): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\users\connor\git\dissertation\mapping.cpp(317): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-c:\users\connor\git\dissertation\mapping.cpp(326): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-c:\users\connor\git\dissertation\mapping.cpp(337): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-c:\users\connor\git\dissertation\mapping.cpp(355): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\users\connor\git\dissertation\mapping.cpp(380): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-c:\users\connor\git\dissertation\mapping.cpp(381): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-c:\users\connor\git\dissertation\mapping.cpp(397): warning C4305: '+=': truncation from 'double' to 'float'
+c:\users\connor\git\dissertation\mapping.cpp(71): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(72): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(121): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(132): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(180): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(290): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(296): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(324): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(333): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(345): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(366): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(401): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(402): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\mapping.cpp(418): warning C4305: '+=': truncation from 'double' to 'float'
   graphicsclass.cpp
 c:\users\connor\git\dissertation\noiseutils.h(1217): warning C4244: 'initializing': conversion from 'const double' to 'float', possible loss of data
 c:\users\connor\git\dissertation\graphicsclass.cpp(94): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
 c:\users\connor\git\dissertation\graphicsclass.cpp(96): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
 c:\users\connor\git\dissertation\graphicsclass.cpp(72): warning C4101: 'result': unreferenced local variable
 c:\users\connor\git\dissertation\graphicsclass.cpp(159): warning C4101: 'result': unreferenced local variable
-c:\users\connor\git\dissertation\graphicsclass.cpp(307): warning C4101: 'result': unreferenced local variable
-c:\users\connor\git\dissertation\graphicsclass.cpp(331): warning C4305: 'initializing': truncation from '__int64' to 'float'
-c:\users\connor\git\dissertation\graphicsclass.cpp(831): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-c:\users\connor\git\dissertation\graphicsclass.cpp(838): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-c:\users\connor\git\dissertation\graphicsclass.cpp(1483): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\graphicsclass.cpp(329): warning C4101: 'result': unreferenced local variable
+c:\users\connor\git\dissertation\graphicsclass.cpp(353): warning C4305: 'initializing': truncation from '__int64' to 'float'
+c:\users\connor\git\dissertation\graphicsclass.cpp(855): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+c:\users\connor\git\dissertation\graphicsclass.cpp(862): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+c:\users\connor\git\dissertation\graphicsclass.cpp(1507): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\graphicsclass.cpp(1690): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+c:\users\connor\git\dissertation\graphicsclass.cpp(1693): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+  face.cpp
+c:\users\connor\git\dissertation\noiseutils.h(1217): warning C4244: 'initializing': conversion from 'const double' to 'float', possible loss of data
+  cameraclass.cpp
+  Star.cpp
+  Generating Code...
+  Compiling...
+  systemclass.cpp
+c:\users\connor\git\dissertation\noiseutils.h(1217): warning C4244: 'initializing': conversion from 'const double' to 'float', possible loss of data
+c:\users\connor\git\dissertation\systemclass.cpp(24): warning C4101: 'result': unreferenced local variable
+  main.cpp
+c:\users\connor\git\dissertation\noiseutils.h(1217): warning C4244: 'initializing': conversion from 'const double' to 'float', possible loss of data
   Generating Code...
   LibNoise64.lib(modulebase.obj) : MSIL .netmodule or module compiled with /GL found; restarting link with /LTCG; add /LTCG to the link command line to improve linker performance
 LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification

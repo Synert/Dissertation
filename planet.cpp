@@ -3,8 +3,6 @@
 Planet::Planet()
 {
 	h_built = false;
-	//m_map = new Mapping();
-	//hires_map = new Mapping();
 	hires = false;
 }
 
@@ -13,23 +11,28 @@ Planet::~Planet()
 
 }
 
-void Planet::Initialize(XMFLOAT3 position, float size, XMFLOAT3 perlin, XMFLOAT4 sky, ID3D11Device* device, ID3D11DeviceContext* context, StarParam star, Mapping* hires_map)
+void Planet::Initialize(XMFLOAT3 position, float size, XMFLOAT3 perlin, XMFLOAT3 mapPerlin, XMFLOAT4 sky, ID3D11Device* device, ID3D11DeviceContext* context,
+	StarParam star, Mapping* hires_map, float waterHeight, float flatten, float temperature)
 {
 	h_built = false;
 	m_map = new Mapping();
-	//hires_map = new Mapping();
 	hires = false;
 
 	m_perlin = perlin;
+	m_mapPerlin = mapPerlin;
 	m_sky = sky;
 	m_size = size;
 	m_pos = position;
+	m_waterHeight = waterHeight;
+	m_flatten = flatten;
 
-	std::thread new_thread(&Planet::Setup, this, position, size, perlin, sky, device, context, star, hires_map);
+	std::thread new_thread(&Planet::Setup, this, position, size, perlin, mapPerlin, sky, device, context, star, hires_map, waterHeight, flatten, temperature);
 	new_thread.detach();
+	//new_thread.join();
 }
 
-void Planet::Setup(XMFLOAT3 position, float size, XMFLOAT3 perlin, XMFLOAT4 sky, ID3D11Device* device, ID3D11DeviceContext* context, StarParam star, Mapping* hires_map)
+void Planet::Setup(XMFLOAT3 position, float size, XMFLOAT3 perlin, XMFLOAT3 mapPerlin, XMFLOAT4 sky, ID3D11Device* device, ID3D11DeviceContext* context,
+	StarParam star, Mapping* hires_map, float waterHeight, float flatten, float temperature)
 {
 	//calculation for the average surface temperature
 
@@ -44,7 +47,9 @@ void Planet::Setup(XMFLOAT3 position, float size, XMFLOAT3 perlin, XMFLOAT4 sky,
 
 	m_temp = star.temperature * powf(1.0f - albedo, 0.25f) * powf(star.radius / (2.0f * p_distance), 0.5f);
 
-	m_map->CreateMaps(256, m_temp, perlin);
+	if (temperature != -1) m_temp = temperature;
+
+	m_map->CreateMaps(256, m_temp, mapPerlin, waterHeight, flatten);
 
 	Face::Transform tempTransform;
 	tempTransform = Face::Transform(position, XMFLOAT3(size, size, size), XMFLOAT3(0.0f, 0.0f, 0.0f), perlin);
@@ -59,24 +64,6 @@ void Planet::Setup(XMFLOAT3 position, float size, XMFLOAT3 perlin, XMFLOAT4 sky,
 
 std::list<ModelClass*> Planet::GetModels(XMFLOAT3 camPos, ID3D11Device* device, ID3D11DeviceContext* context, Mapping* hires_map)
 {
-	if (hires_map->IsBuilt() && !hires)
-	{
-		hires = true;
-		for (int i = 0; i < 6; i++)
-		{
-			//m_faces[i]->Rebuild(device, context);
-		}
-	}
-
-	if (!hires_map->IsBuilt() && hires)
-	{
-		hires = false;
-		for (int i = 0; i < 6; i++)
-		{
-			//m_faces[i]->Rebuild(device, context);
-		}
-	}
-
 	std::list<ModelClass*> result;
 
 	if (!h_built) return result;
@@ -93,27 +80,24 @@ std::list<ModelClass*> Planet::GetModels(XMFLOAT3 camPos, ID3D11Device* device, 
 	return result;
 }
 
-void Planet::Shutdown()
+bool Planet::Shutdown()
 {
 	//first, make sure the heightmaps aren't currently generating or anything goofy
 
+	if (!h_built) return false;
+
+	h_built = false;
+
 	for (int i = 0; i < 6; i++)
 	{
-		if (m_faces[i] != NULL)
-		{
-			m_faces[i]->Shutdown();
-			delete m_faces[i];
-			m_faces[i] = 0;
-		}
+		if(!m_faces[i]->Shutdown()) return false;
+		delete m_faces[i];
 	}
 
-	m_map->Shutdown();
+	if(!m_map->Shutdown()) return false;
 	delete m_map;
-	m_map = 0;
 
-	//hires_map->Shutdown();
-	//delete hires_map;
-	//hires_map = 0;
+	return true;
 }
 
 bool Planet::DrawSky(XMFLOAT3 camPos)
@@ -131,24 +115,8 @@ bool Planet::DrawSky(XMFLOAT3 camPos)
 
 	if (distance < m_size * 2.0f)
 	{
-		//if it's close enough for sky, it's also close enough for the hi-res
-
-		//if (!hires_map->IsBuilding())
-		//{
-			//hires_map->Setup(1024, m_temp, m_perlin);
-		//}
 
 		return true;
-	}
-
-	else
-	{
-		//if (hires_map->IsBuilt())
-		//{
-			//hires_map->Shutdown();
-			//delete hires_map;
-			//hires = false;
-		//}
 	}
 
 	return false;
@@ -167,6 +135,11 @@ XMFLOAT4 Planet::GetSky()
 	result.z *= scalar;
 
 	return result;
+}
+
+XMFLOAT4 Planet::GetUnscaledSky()
+{
+	return m_sky;
 }
 
 XMFLOAT3 Planet::GetPosition()
@@ -198,7 +171,17 @@ XMFLOAT3 Planet::GetPerlin()
 	return m_perlin;
 }
 
+XMFLOAT3 Planet::GetMapPerlin()
+{
+	return m_mapPerlin;
+}
+
 bool Planet::Built()
 {
 	return h_built;
+}
+
+float Planet::GetFlat()
+{
+	return m_flatten;
 }

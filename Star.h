@@ -31,8 +31,10 @@ public:
 	StarParam GetParam();
 	XMFLOAT4 GetColor();
 
+	//for the GUI to access
+	StarParam m_param;
+
 private:
 	ModelClass* m_model;
 	XMFLOAT4 m_color;
-	StarParam m_param;
 };
