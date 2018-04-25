@@ -28,10 +28,10 @@ class Mapping
 public:
 	Mapping();
 
-	void Setup(int _hres, float m_temp, XMFLOAT3 perlin, float waterHeight, float flatten);
-	void CreateMaps(int _hres, float m_temp, XMFLOAT3 perlin, float waterHeight, float flatten);
-	void CreateHeightMap(float m_temp, XMFLOAT3 perlin, float waterHeight, float flatten);
-	void HeightmapThread(int z, float temp, XMFLOAT3 perlin, float waterHeight, float flatten);
+	void Setup(int _hres, float m_temp, XMFLOAT3 perlin, XMFLOAT3 mapPerlin, float waterHeight, float flatten);
+	void CreateMaps(int _hres, float m_temp, XMFLOAT3 perlin, XMFLOAT3 mapPerlin, float waterHeight, float flatten);
+	void CreateHeightMap(float m_temp, XMFLOAT3 perlin, XMFLOAT3 mapPerlin, float waterHeight, float flatten);
+	void HeightmapThread(int z, float temp, XMFLOAT3 perlin, XMFLOAT3 mapPerlin, float waterHeight, float flatten);
 	bool Shutdown();
 	float GetHeightMapValue(int face, int x, int y);
 	float GetHeightMapValueFloat(int face, float xCoordFloat, float yCoordFloat);

@@ -49,7 +49,7 @@ void Planet::Setup(XMFLOAT3 position, float size, XMFLOAT3 perlin, XMFLOAT3 mapP
 
 	if (temperature != -1) m_temp = temperature;
 
-	m_map->CreateMaps(256, m_temp, mapPerlin, waterHeight, flatten);
+	m_map->CreateMaps(256, m_temp, perlin, mapPerlin, waterHeight, flatten);
 
 	Face::Transform tempTransform;
 	tempTransform = Face::Transform(position, XMFLOAT3(size, size, size), XMFLOAT3(0.0f, 0.0f, 0.0f), perlin);

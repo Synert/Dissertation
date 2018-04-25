@@ -6,7 +6,7 @@ Mapping::Mapping()
 	h_building = false;
 }
 
-void Mapping::Setup(int _hres, float m_temp, XMFLOAT3 perlin, float waterHeight, float flatten)
+void Mapping::Setup(int _hres, float m_temp, XMFLOAT3 perlin, XMFLOAT3 mapPerlin, float waterHeight, float flatten)
 {
 	if (h_building) return;
 	if (h_built)
@@ -19,28 +19,28 @@ void Mapping::Setup(int _hres, float m_temp, XMFLOAT3 perlin, float waterHeight,
 	h_map = NULL;
 	c_map = NULL;
 
-	std::thread new_thread(&Mapping::CreateMaps, this, _hres, m_temp, perlin, waterHeight, flatten);
+	std::thread new_thread(&Mapping::CreateMaps, this, _hres, m_temp, perlin, mapPerlin, waterHeight, flatten);
 	new_thread.detach();
 	//new_thread.join();
 }
 
-void Mapping::CreateMaps(int _hres, float m_temp, XMFLOAT3 perlin, float waterHeight, float flatten)
+void Mapping::CreateMaps(int _hres, float m_temp, XMFLOAT3 perlin, XMFLOAT3 mapPerlin, float waterHeight, float flatten)
 {
 	h_res = _hres;
 	c_map = new XMFLOAT3[6 * h_res * h_res];
 	h_map = new float[6 * h_res * h_res];
-	CreateHeightMap(m_temp, perlin, waterHeight, flatten);
+	CreateHeightMap(m_temp, perlin, mapPerlin, waterHeight, flatten);
 }
 
-void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin, float waterHeight, float flatten)
+void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin, XMFLOAT3 mapPerlin, float waterHeight, float flatten)
 {
 	h_finished = 0;
-	std::thread new_thread1(&Mapping::HeightmapThread, this, 0, m_temp, perlin, waterHeight, flatten);
-	std::thread new_thread2(&Mapping::HeightmapThread, this, 1, m_temp, perlin, waterHeight, flatten);
-	std::thread new_thread3(&Mapping::HeightmapThread, this, 2, m_temp, perlin, waterHeight, flatten);
-	std::thread new_thread4(&Mapping::HeightmapThread, this, 3, m_temp, perlin, waterHeight, flatten);
-	std::thread new_thread5(&Mapping::HeightmapThread, this, 4, m_temp, perlin, waterHeight, flatten);
-	std::thread new_thread6(&Mapping::HeightmapThread, this, 5, m_temp, perlin, waterHeight, flatten);
+	std::thread new_thread1(&Mapping::HeightmapThread, this, 0, m_temp, perlin, mapPerlin, waterHeight, flatten);
+	std::thread new_thread2(&Mapping::HeightmapThread, this, 1, m_temp, perlin, mapPerlin, waterHeight, flatten);
+	std::thread new_thread3(&Mapping::HeightmapThread, this, 2, m_temp, perlin, mapPerlin, waterHeight, flatten);
+	std::thread new_thread4(&Mapping::HeightmapThread, this, 3, m_temp, perlin, mapPerlin, waterHeight, flatten);
+	std::thread new_thread5(&Mapping::HeightmapThread, this, 4, m_temp, perlin, mapPerlin, waterHeight, flatten);
+	std::thread new_thread6(&Mapping::HeightmapThread, this, 5, m_temp, perlin, mapPerlin, waterHeight, flatten);
 	new_thread1.join();
 	new_thread2.join();
 	new_thread3.join();
@@ -52,7 +52,7 @@ void Mapping::CreateHeightMap(float m_temp, XMFLOAT3 perlin, float waterHeight, 
 	cancel = false;
 }
 
-void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, float waterHeight, float flatten)
+void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, XMFLOAT3 mapPerlin, float waterHeight, float flatten)
 {
 	module::Perlin perlinModule, waterModule, terrainPicker;
 	module::RidgedMulti altModule;
@@ -104,11 +104,22 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, float waterH
 		data[i + 2] = tmp;
 	}
 
+	if (m_temp > 373.2f && m_temp < 1000.0f)
+	{
+		waterHeight -= (m_temp - 373.2f) / 100.0f;
+		if (waterHeight < 0.0f) waterHeight = 0.0f;
+	}
+	if (m_temp >= 1000.0f)
+	{
+		waterHeight = 0.3f + (m_temp - 1000.0f) / 1000.0f;
+		if (waterHeight > 1.0f) waterHeight = 1.0f;
+	}
+
 	for (int x = 0; x < h_res; x++)
 	{
 		for (int y = 0; y < h_res; y++)
 		{
-			XMFLOAT3 coord;
+			XMFLOAT3 coord, mapCoord;
 
 			int tempZ = -1.0f;
 			float tempX = (float)x / (float)(h_res - 1);
@@ -133,25 +144,23 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, float waterH
 			tempPos = XMVector3TransformCoord(tempPos, cubeRot);
 			XMStoreFloat3(&coord, tempPos);
 
+			mapCoord = coord;
+
 			//get the coordinates for the perlin noise
-			//coord = AddFloat3(coord, perlin);
-			coord.x += perlin.x;
-			coord.y += perlin.y;
-			coord.z += perlin.z;
+			coord = Maths::AddFloat3(coord, perlin);
+			mapCoord = Maths::AddFloat3(mapCoord, mapPerlin);
 
 			//coord = TakeFloat3(coord, origin);
 
-			//tempCoord = MultFloat3(tempCoord, perlinScale);
-			coord.x *= perlinScale.x;
-			coord.y *= perlinScale.y;
-			coord.z *= perlinScale.z;
+			coord = Maths::MultFloat3(coord, perlinScale);
+			mapCoord = Maths::MultFloat3(mapCoord, perlinScale);
 
 			//get a value between 1 and 0
 			double value = myModule.GetValue(coord.x, coord.y, coord.z);
 			value += 2.0f;
 			value /= 3.0f;
 
-			double waterValue = waterModule.GetValue(coord.x * 3.0f, coord.y * 3.0f, coord.z * 3.0f);
+			double waterValue = waterModule.GetValue(mapCoord.x * 3.0f, mapCoord.y * 3.0f, mapCoord.z * 3.0f);
 			waterValue += 2.0f;
 			waterValue /= 3.0f;
 
@@ -165,15 +174,15 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, float waterH
 			}
 			if (m_temp > 373.2f)
 			{
-				waterValue *= (m_temp - 373.2f) / 2700.0f;
+				waterValue -= (m_temp - 373.2f) / 2700.0f;
+				if (waterValue < 0.0f) waterValue = 0.0f;
 			}
+
 			//float value = tempX;
 
 			float tempValue = 1.0f - value;
-			if (m_temp > 373.2f)
-			{
-				tempValue += (m_temp - 373.2f) / 2700.0f;
-			}
+			tempValue += (m_temp - 273.2f) / 2700.0f;
+
 			if (m_temp <= 273.2f)
 			{
 				tempValue -= (273.2f - m_temp) / 400.0f;
@@ -320,7 +329,16 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, float waterH
 				waterColor *= 1.0f;
 				//newValue *= 0.95f;
 			}
-			else if (value < waterHeight && m_temp <= 373.2f && m_temp >= 273.2f)
+			else if (m_temp < 273.2f && value < waterHeight)
+			{
+				ice = true;
+				waterColor = abs(value - waterHeight);
+				waterColor /= waterHeight;
+				waterColor = waterHeight - waterColor;
+				waterColor += 0.5f;
+				waterColor *= 1.5f;
+			}
+			else if (value < waterHeight)
 			{
 				waterColor = 1.0f - (abs(value - waterHeight) * 2.0f) / waterHeight;
 				waterColor /= 2.0f;
@@ -331,17 +349,8 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, float waterH
 				//value = waterHeight;
 				water = true;
 			}
-			else if (m_temp < 273.2f && value < waterHeight)
-			{
-				ice = true;
-				waterColor = abs(value - waterHeight);
-				waterColor /= waterHeight;
-				waterColor = waterHeight - waterColor;
-				waterColor += 0.5f;
-				waterColor *= 1.5f;
-			}
 
-			if (value < waterHeight && (m_temp < 373.2f || m_temp > 1000.0f))
+			if (value < waterHeight && (water || ice || lava))
 			{
 				value = waterHeight;
 			}

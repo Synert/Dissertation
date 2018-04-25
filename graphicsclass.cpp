@@ -223,7 +223,7 @@ bool GraphicsClass::Render(TwBar* bar)
 		if (!m_hiresMap->IsBuilding())
 		{
 			//create the hires map here
-			m_hiresMap->Setup(1024, closest->GetTemperature(), closest->GetMapPerlin(), closest->GetWaterHeight(), closest->GetFlat());
+			m_hiresMap->Setup(1024, closest->GetTemperature(), closest->GetPerlin(), closest->GetMapPerlin(), closest->GetWaterHeight(), closest->GetFlat());
 			m_hiresMap->SetPlanet(closest);
 			builtPlanet = closest;
 		}

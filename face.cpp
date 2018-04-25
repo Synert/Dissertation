@@ -259,6 +259,16 @@ void Face::MakeFace(ID3D11Device* device, ID3D11DeviceContext* context)
 
 	if (faceDir >= 0)
 	{
+		int h_res = m_map->GetHeightMapRes();
+
+		// Set the yaw (Y axis), pitch (X axis), and roll (Z axis) rotations in radians.
+		float pitch = transform.rot.x * 0.0174532925f;
+		float yaw = transform.rot.y * 0.0174532925f;
+		float roll = transform.rot.z * 0.0174532925f;
+
+		// Create the rotation matrix from the yaw, pitch, and roll values.
+		XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
+
 		for (auto it = vertexList.begin(); it != vertexList.end(); it++)
 		{
 			XMFLOAT3 tempCoord = it->position;
@@ -267,12 +277,8 @@ void Face::MakeFace(ID3D11Device* device, ID3D11DeviceContext* context)
 			//reading from heightmap
 			//first, convert coordinates to the heightmap coordinates
 
-			int h_res = m_map->GetHeightMapRes();
+			//int h_res = m_map->GetHeightMapRes();
 			//int n_res = m_map->GetNormalMapRes();
-
-			if (m_map->Cancelled()) return;
-			if (m_map == NULL) return;
-			if (m_map == nullptr) return;
 
 			float xCoordFloat = ((min(max(tempCoord.x, -1.0f), 1.0f) + 1.0f) / 2.0f) * (float)(h_res - 1);
 			float yCoordFloat = ((min(max(tempCoord.y, -1.0f), 1.0f) + 1.0f) / 2.0f) * (float)(h_res - 1);
@@ -290,182 +296,48 @@ void Face::MakeFace(ID3D11Device* device, ID3D11DeviceContext* context)
 			XMStoreFloat3(&tempCoord, tempPos);
 			it->position = tempCoord;
 
-			// Set the yaw (Y axis), pitch (X axis), and roll (Z axis) rotations in radians.
-			float pitch = transform.rot.x * 0.0174532925f;
-			float yaw = transform.rot.y * 0.0174532925f;
-			float roll = transform.rot.z * 0.0174532925f;
-
 			tempCoord = origin;
 			origin = XMFLOAT3(-1.0f, -1.0f, 0.0f);
-
-			// Create the rotation matrix from the yaw, pitch, and roll values.
-			XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
-
-			float newValue = (float)value;
-
-			//now move that between 1 and 0.15
-			value *= 30.0f;
-			value -= 6.5f;
-			value /= 3.5f;
-
-			float tempScale = 1.0f - (value / 2.5f);
-			float newTemp = temperature * tempScale;
 
 			tempPos = XMLoadFloat3(&it->position);
 			tempPos = XMVector3TransformCoord(tempPos, rotationMatrix);
 			//normalize
 			tempPos = XMVector3Normalize(tempPos);
 			XMStoreFloat3(&it->position, tempPos);
-			it->position = MultFloat3(it->position, XMFLOAT3((float)newValue, (float)newValue, (float)newValue));
+
+			it->position = MultFloat3(it->position, XMFLOAT3((float)value, (float)value, (float)value));
 			it->position = MultFloat3(it->position, transform.scale);
 			it->position = AddFloat3(it->position, transform.pos);
 			it->position = TakeFloat3(it->position, origin);
-			//it->color = XMFLOAT4(1.0f - value, 0, value, 1.0f);
-			//it->color = XMFLOAT4((0.8f - value * 0.8f), (value * 0.7f), 0.5f, 1.0f);
-			//it->color = XMFLOAT4((temperature * tempScale) / 3000.0f, 0.0f, 1.0f - (temperature * tempScale) / 3000.0f, 1.0f);
 
 			origin = tempCoord;
 		}
 
 		ModelClass::VertexType temp;
 		temp.position = center;
+
+		float xCoordFloat = ((min(max(center.x, -1.0f), 1.0f) + 1.0f) / 2.0f) * (float)(h_res - 1);
+		float yCoordFloat = ((min(max(center.y, -1.0f), 1.0f) + 1.0f) / 2.0f) * (float)(h_res - 1);
+		float value = m_map->GetHeightMapValueFloat(faceDir, xCoordFloat, yCoordFloat);
+
 		XMVECTOR tempPos = XMLoadFloat3(&temp.position);
 		tempPos = XMVector3TransformCoord(tempPos, cubeRot);
 		XMStoreFloat3(&temp.position, tempPos);
 		center = temp.position;
-	}
 
-	// Set the yaw (Y axis), pitch (X axis), and roll (Z axis) rotations in radians.
-	float pitch = transform.rot.x * 0.0174532925f;
-	float yaw = transform.rot.y * 0.0174532925f;
-	float roll = transform.rot.z * 0.0174532925f;
-
-	origin = XMFLOAT3(-1.0f, -1.0f, 0.0f);
-
-	// Create the rotation matrix from the yaw, pitch, and roll values.
-	XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
-
-	module::Perlin myModule;
-	myModule.SetOctaveCount(10);
-
-	float pScale = 0.75f;
-	XMFLOAT3 perlinScale = XMFLOAT3(pScale, pScale, pScale);
-	float waterHeight = 0.30f;
-
-	/*for (auto it = vertexList.begin(); it != vertexList.end(); it++)
-	{
-		//get the coordinates for the perlin noise
-		XMFLOAT3 tempCoord = it->position;
-		//tempCoord = MultFloat3(tempCoord, transform.scale);
-		tempCoord = AddFloat3(tempCoord, transform.perlin);
-		tempCoord = TakeFloat3(tempCoord, origin);
-
-		tempCoord = MultFloat3(tempCoord, perlinScale);
-
-		//get a value between 1 and 0
-		double value = myModule.GetValue(tempCoord.x, tempCoord.y, tempCoord.z);
-		value += 2.0f;
-		value /= 3.0f;
-
-		float newValue = (float)value;
-
-		//now move that between 1 and 0.15
-		newValue *= 3.5f;
-		newValue += 6.5f;
-		newValue /= 30.0f;
-
-		float tempScale = 1.0f - (value / 2.5f);
-		float newTemp = temperature * tempScale;
-
-		float waterColor = 0.0f;
-		float oldValue = newValue;
-		bool water = false;
-		bool lava = false;
-		if (newValue < waterHeight && temperature < 373.2f)
-		{
-			waterColor = abs(newValue - waterHeight);
-			waterColor /= waterHeight;
-			waterColor = waterHeight - waterColor;
-			waterColor *= 1.25f;
-			newValue = waterHeight;
-			water = true;
-		}
-		if (newTemp > 1000.0f)
-		{
-			lava = true;
-			waterColor = abs(newValue - waterHeight);
-			waterColor /= waterHeight;
-			waterColor = waterHeight - waterColor;
-			waterColor += 0.5f;
-			waterColor *= 1.0f;
-			newValue *= 0.95f;
-		}
-
-		XMVECTOR tempPos = XMLoadFloat3(&it->position);
+		tempPos = XMLoadFloat3(&center);
 		tempPos = XMVector3TransformCoord(tempPos, rotationMatrix);
 		//normalize
 		tempPos = XMVector3Normalize(tempPos);
-		XMStoreFloat3(&it->position, tempPos);
-		//it->position = MultFloat3(it->position, XMFLOAT3((float)newValue, (float)newValue, (float)newValue));
-		//it->position = MultFloat3(it->position, transform.scale);
-		//it->position = AddFloat3(it->position, transform.pos);
-		//it->position = TakeFloat3(it->position, origin);
-		//it->color = XMFLOAT4(1.0f - value, 0, value, 1.0f);
-		//it->color = XMFLOAT4((0.8f - value * 0.8f), (value * 0.7f), 0.5f, 1.0f);
-		//it->color = XMFLOAT4((temperature * tempScale) / 3000.0f, 0.0f, 1.0f - (temperature * tempScale) / 3000.0f, 1.0f);
-		if (water)
-		{
-			//it->color.x *= waterColor;
-			//it->color.y *= waterColor;
-			//it->color.z *= waterColor;
-			//it->color.z += 0.25 * (waterColor - waterHeight);
-		}
-		if (lava)
-		{
-			//it->color.x *= waterColor;
-			//it->color.y *= waterColor;
-			//it->color.z *= waterColor * 0.25f;
-			//it->color.x += 0.5 * (waterColor - waterHeight);
-			//it->color.y += 0.25 * (waterColor - waterHeight);
+		XMStoreFloat3(&center, tempPos);
 
-			//it->color = XMFLOAT4(1.0f, 0.25f, 0.0f, 1.0f);
-		}
-	}*/
+		center = MultFloat3(center, XMFLOAT3((float)value, (float)value, (float)value));
+		center = MultFloat3(center, transform.scale);
+		center = AddFloat3(center, transform.pos);
+		center = TakeFloat3(center, XMFLOAT3(-1.0f, -1.0f, 0.0f));
 
-	//center
 
-	//get the coordinates for the perlin noise
-	XMFLOAT3 tempCoord = center;
-	//tempCoord = MultFloat3(tempCoord, transform.scale);
-	tempCoord = AddFloat3(tempCoord, transform.perlin);
-	tempCoord = TakeFloat3(tempCoord, origin);
-
-	tempCoord = MultFloat3(tempCoord, perlinScale);
-
-	//get a value between 1 and 0
-	double value = myModule.GetValue(tempCoord.x, tempCoord.y, tempCoord.z);
-	value += 2.0f;
-	value /= 3.0f;
-
-	//now move that between 1 and 0.15
-	value *= 3.5f;
-	value += 6.5f;
-	value /= 30.0f;
-
-	if (value < waterHeight)
-	{
-		//value = waterHeight;
 	}
-
-	XMVECTOR tempPos = XMLoadFloat3(&center);
-	tempPos = XMVector3TransformCoord(tempPos, rotationMatrix);
-	//normalize
-	tempPos = XMVector3Normalize(tempPos);
-	XMStoreFloat3(&center, tempPos);
-	center = MultFloat3(center, XMFLOAT3((float)value, (float)value, (float)value));
-	center = MultFloat3(center, transform.scale);
-	center = AddFloat3(center, transform.pos);
-	center = TakeFloat3(center, origin);
 	
 	if (!smooth)
 	{
@@ -670,11 +542,6 @@ bool Face::Shutdown()
 	creating = false;
 
 	return true;
-
-	//delete lowres_map;
-	//delete hires_map;
-	//delete m_map;
-	//delete m_parent;
 }
 
 bool Face::Created()
