@@ -1,5 +1,15 @@
-﻿  face.cpp
+﻿  mapping.cpp
 c:\users\connor\git\dissertation\noiseutils.h(1217): warning C4244: 'initializing': conversion from 'const double' to 'float', possible loss of data
+mapping.cpp(72): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+mapping.cpp(73): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+mapping.cpp(124): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+mapping.cpp(135): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+mapping.cpp(173): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+mapping.cpp(283): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+mapping.cpp(302): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+mapping.cpp(311): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+mapping.cpp(319): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+mapping.cpp(367): warning C4305: '+=': truncation from 'double' to 'float'
   Generating code
   78 of 1239 functions ( 6.3%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation

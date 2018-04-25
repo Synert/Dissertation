@@ -42,8 +42,6 @@ public:
 	void Cancel();
 	bool Cancelled();
 
-	XMFLOAT3 Blend(XMFLOAT3 a, XMFLOAT3 b);
-
 	float GetWaterHeight();
 	void SetPlanet(void* planet);
 	void* CurrentPlanet();

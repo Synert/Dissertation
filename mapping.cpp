@@ -150,8 +150,6 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, XMFLOAT3 map
 			coord = Maths::AddFloat3(coord, perlin);
 			mapCoord = Maths::AddFloat3(mapCoord, mapPerlin);
 
-			//coord = TakeFloat3(coord, origin);
-
 			coord = Maths::MultFloat3(coord, perlinScale);
 			mapCoord = Maths::MultFloat3(mapCoord, perlinScale);
 
@@ -166,19 +164,11 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, XMFLOAT3 map
 
 			waterValue *= (waterHeight * 0.5f);
 
-			bool desert = false;
-			if (!(m_temp < 373.2f && m_temp > 273.2f))
-			{
-				//waterValue = 0.0f;
-				//desert = true;
-			}
 			if (m_temp > 373.2f)
 			{
 				waterValue -= (m_temp - 373.2f) / 2700.0f;
 				if (waterValue < 0.0f) waterValue = 0.0f;
 			}
-
-			//float value = tempX;
 
 			float tempValue = 1.0f - value;
 			tempValue += (m_temp - 273.2f) / 2700.0f;
@@ -188,13 +178,11 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, XMFLOAT3 map
 				tempValue -= (273.2f - m_temp) / 400.0f;
 			}
 
-			//tempValue += waterHeight * 2;
-			//tempValue /= (1.0f + waterHeight * 2);
 			tempValue *= 1.0f + waterHeight * 2.0f;
 
 			//choose the biome
-			Biome m_biome = BIOME_NONE;
-			if (tempValue < 0.2f && !desert)
+			/*Biome m_biome = BIOME_NONE;
+			if (tempValue < 0.2f)
 			{
 				if (waterValue < 0.3f)
 				{
@@ -245,15 +233,13 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, XMFLOAT3 map
 				{
 					m_biome = BIOME_FOREST_TROPICAL_RAIN;
 				}
-			}
+			}*/
 
 			XMFLOAT3 finalCol = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
-			//m_biome = BIOME_NONE;
-
 			//temporary setup for biome colours
 			//to-do: put and/or procgen textures for each, place objects
-			switch ((int)m_biome)
+			/*switch ((int)m_biome)
 			{
 			case BIOME_DESERT_COLD:
 				finalCol = XMFLOAT3(0.4f, 0.35f, 0.15f);
@@ -288,7 +274,7 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, XMFLOAT3 map
 				break;
 			}
 
-			finalCol = Maths::ScalarFloat3(finalCol, (value + 2.0f) / 2.0f);
+			finalCol = Maths::ScalarFloat3(finalCol, (value + 2.0f) / 2.0f);*/
 
 			float cappedValue = tempValue;
 			if (cappedValue < 0.0f) cappedValue = 0.0f;
@@ -298,17 +284,8 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, XMFLOAT3 map
 			if (cappedWater < 0.0f) cappedWater = 0.0f;
 			if (cappedWater > 1.0f) cappedWater = 1.0f;
 
-			//cappedValue = 1.0f - cappedValue;
-			//cappedWater = 1.0f - cappedWater;
-
-			int newTempY = (int)(cappedValue * 100.0f);
-			int newTempX = (int)(cappedWater * 100.0f);
-
-			if (newTempX > 99) newTempX = 99;
-			if (newTempX < 0) newTempX = 0;
-
-			if (newTempY > 99) newTempY = 99;
-			if (newTempY < 0) newTempY = 0;
+			int newTempY = (int)(cappedValue * 99.0f);
+			int newTempX = (int)(cappedWater * 99.0f);
 
 			finalCol.x = data[3 * (newTempX * width + newTempY)] / 255.0f;
 			finalCol.y = data[3 * (newTempX * width + newTempY) + 1] / 255.0f;
@@ -319,7 +296,7 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, XMFLOAT3 map
 			bool lava = false;
 			bool ice = false;
 
-			if (m_temp >= 1000.0f && value < waterHeight)
+			if (m_temp >= 1000.0f && value <= waterHeight)
 			{
 				lava = true;
 				waterColor = abs(value - waterHeight);
@@ -327,9 +304,8 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, XMFLOAT3 map
 				waterColor = waterHeight - waterColor;
 				waterColor += 0.5f;
 				waterColor *= 1.0f;
-				//newValue *= 0.95f;
 			}
-			else if (m_temp < 273.2f && value < waterHeight)
+			else if (m_temp < 273.2f && value <= waterHeight)
 			{
 				ice = true;
 				waterColor = abs(value - waterHeight);
@@ -338,15 +314,10 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, XMFLOAT3 map
 				waterColor += 0.5f;
 				waterColor *= 1.5f;
 			}
-			else if (value < waterHeight)
+			else if (value <= waterHeight)
 			{
 				waterColor = 1.0f - (abs(value - waterHeight) * 2.0f) / waterHeight;
 				waterColor /= 2.0f;
-				//waterColor /= waterHeight;
-				//waterColor = waterHeight - waterColor;
-				//waterColor *= 0.5f;
-				//newValue = waterHeight;
-				//value = waterHeight;
 				water = true;
 			}
 
@@ -355,68 +326,45 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, XMFLOAT3 map
 				value = waterHeight;
 			}
 
-			//now move that between 1 and 0.15
-			float newValue = (float)value;
-
 			float minSize = flatten;
 
-			newValue *= minSize;
-			newValue += (10.0f - minSize);
-			newValue /= 30.0f;
-
-			float tempScale = 1.0f - (value / 2.5f);
-			float newTemp = m_temp * tempScale;
-
-			if (newTemp < 0) newTemp = 0;
-			if (newTemp > 3000.0f) newTemp = 3000.0f;
-
-			//XMFLOAT3 col = XMFLOAT3((3000.0f - newTemp) / 3000.0f, newTemp / 3000.0f, 0.0f);
-			//col = XMFLOAT3((0.8f - value * 0.8f), (value * 0.7f), 0.5f);
-			XMFLOAT3 col = finalCol;
-
-			//base color
-			XMFLOAT3 waterCol = XMFLOAT3(0.0f, 0.2f, 0.8f);
+			value *= minSize;
+			value += (10.0f - minSize);
+			value /= 30.0f;
 			
-			//blend with sky- need access to planet first! pass as parameter?
-			//waterCol = Blend(waterCol, sky)
-
-			//col = XMFLOAT4(1.0f - value, 0, value, 1.0f);
-			//it->color = XMFLOAT4((temperature * tempScale) / 3000.0f, 0.0f, 1.0f - (temperature * tempScale) / 3000.0f, 1.0f);
 			if (water)
 			{
-				col = Maths::AddFloat3(col, Maths::one);
-				col = Maths::ScalarFloat3(col, 0.5f);
-				col = Maths::ScalarFloat3(col, waterColor);
+				finalCol = Maths::AddFloat3(finalCol, Maths::one);
+				finalCol = Maths::ScalarFloat3(finalCol, 0.5f);
+				finalCol = Maths::ScalarFloat3(finalCol, waterColor);
 
-				//col.z += 0.25 * (waterColor - waterHeight);
-				col.z += 0.5f;
-				col = Maths::ScalarFloat3(col, 0.5f);
-				//col = Blend(col, waterCol);
-				//col = Blend(col, waterCol);
+				finalCol.z += 0.5f;
+				finalCol = Maths::ScalarFloat3(finalCol, 0.5f);
 			}
 			if (lava)
 			{
-				col.x *= waterColor;
-				col.y *= waterColor;
-				col.z *= waterColor * 0.25f;
-				col.x += 0.5 * (waterColor - waterHeight);
-				col.y += 0.25 * (waterColor - waterHeight);
+				finalCol.x *= waterColor;
+				finalCol.y *= waterColor;
+				finalCol.z *= waterColor * 0.25f;
 
-				//it->color = XMFLOAT4(1.0f, 0.25f, 0.0f, 1.0f);
+				finalCol.x = 1.0f - finalCol.x;
+
+				finalCol.x += 0.5f + 0.5f * (waterColor - waterHeight);
+				finalCol.y += 0.25f * (waterColor - waterHeight);
 			}
 			if (ice)
 			{
-				col = Maths::ScalarFloat3(col, 0.15f);
-				col = Maths::AddFloat3(col, XMFLOAT3(0.55f, 0.55f, 0.55f));
+				finalCol = Maths::ScalarFloat3(finalCol, 0.15f);
+				finalCol = Maths::AddFloat3(finalCol, XMFLOAT3(0.55f, 0.55f, 0.55f));
 
-				col.x *= waterColor;
-				col.y *= waterColor;
-				col.z *= waterColor;
+				finalCol.x *= waterColor;
+				finalCol.y *= waterColor;
+				finalCol.z *= waterColor;
 
-				if (col.x > 1.0f) col.x = 1.0f;
-				if (col.y > 1.0f) col.y = 1.0f;
-				if (col.z > 1.0f) col.z = 1.0f;
-				col.z += 0.45;
+				if (finalCol.x > 1.0f) finalCol.x = 1.0f;
+				if (finalCol.y > 1.0f) finalCol.y = 1.0f;
+				if (finalCol.z > 1.0f) finalCol.z = 1.0f;
+				finalCol.z += 0.45;
 			}
 
 			if (cancel)
@@ -426,16 +374,8 @@ void Mapping::HeightmapThread(int z, float m_temp, XMFLOAT3 perlin, XMFLOAT3 map
 				//return;
 			}
 
-			if (h_map == NULL)
-			{
-				//h_building = false;
-				//h_finished++;
-				//return;
-			}
-
-			h_map[(z * h_res * h_res) + (y * h_res) + x] = (float)newValue;
-			c_map[(z * h_res * h_res) + (y * h_res) + x] = col;
-			//c_map[(z * h_res * h_res) + (y * h_res) + x] = XMFLOAT3((m_temp * tempScale) / 3000.0f, 0.0f, 1.0f - (m_temp * tempScale) / 3000.0f);
+			h_map[(z * h_res * h_res) + (y * h_res) + x] = (float)value;
+			c_map[(z * h_res * h_res) + (y * h_res) + x] = finalCol;
 
 		}
 	}
@@ -543,41 +483,6 @@ void Mapping::SetPlanet(void* planet)
 void* Mapping::CurrentPlanet()
 {
 	return m_planet;
-}
-
-XMFLOAT3 Mapping::Blend(XMFLOAT3 a, XMFLOAT3 b)
-{
-
-	XMFLOAT3 result;
-
-	if (b.x < 0.5f)
-	{
-		result.x = (2.0f * a.x * b.x) + (a.x * a.x) * (1.0f - (2.0f * b.x));
-	}
-	else
-	{
-		result.x = (2.0f * a.x) * (1.0f - b.x) + sqrt(a.x) * ((2.0f * b.x) - 1.0f);
-	}
-
-	if (b.y < 0.5f)
-	{
-		result.y = (2.0f * a.y * b.y) + (a.y * a.y) * (1.0f - (2.0f * b.y));
-	}
-	else
-	{
-		result.y = (2.0f * a.y) * (1.0f - b.y) + sqrt(a.y) * ((2.0f * b.y) - 1.0f);
-	}
-
-	if (b.z < 0.5f)
-	{
-		result.x = (2.0f * a.z * b.z) + (a.z * a.z) * (1.0f - (2.0f * b.z));
-	}
-	else
-	{
-		result.x = (2.0f * a.z) * (1.0f - b.z) + sqrt(a.z) * ((2.0f * b.z) - 1.0f);
-	}
-	
-	return result;
 }
 
 float Mapping::GetWaterHeight()
