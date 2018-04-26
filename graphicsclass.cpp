@@ -1878,10 +1878,13 @@ void GraphicsClass::SetTweakBar(TwBar* bar)
 	TwAddVarRW(bar, "Planet count", TW_TYPE_INT32, &numPlanets, " min=1 max=20 ");
 	TwAddButton(bar, "Remake system", MakeSystem, this, " ");
 
+	TwAddSeparator(bar, "NewSep3", NULL);
+
 	TwAddButton(bar, "Click and hold to pan view", NULL, NULL, NULL);
 	TwAddButton(bar, "WASD to move", NULL, NULL, NULL);
 	TwAddButton(bar, "SHIFT to increase speed", NULL, NULL, NULL);
 	TwAddButton(bar, "SPACE/CTRL for height", NULL, NULL, NULL);
+	TwAddButton(bar, "ESC to quit", NULL, NULL, NULL);
 
 	TwDefine(" Options/'Star settings' opened=false ");
 	TwDefine(" Options/'Planet settings' opened=false ");
