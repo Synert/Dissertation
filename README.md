@@ -10,7 +10,7 @@ Everything necessary is included in the debug/release folders, although debug mo
 
 ### Example planets
 
-![](http://www.synert.co.uk/images/blog/planets.png)
+![](http://www.synert.co.uk/images/blog/planetgraph.png)
 
 ### Libraries used
 - [libnoise](http://libnoise.sourceforge.net/)
