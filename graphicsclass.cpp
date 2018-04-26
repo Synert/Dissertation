@@ -1879,7 +1879,8 @@ void GraphicsClass::SetTweakBar(TwBar* bar)
 	TwAddButton(bar, "Remake system", MakeSystem, this, " ");
 
 	TwAddButton(bar, "Click and hold to pan view", NULL, NULL, NULL);
-	TwAddButton(bar, "WASD to move, SHIFT for speed", NULL, NULL, NULL);
+	TwAddButton(bar, "WASD to move", NULL, NULL, NULL);
+	TwAddButton(bar, "SHIFT to increase speed", NULL, NULL, NULL);
 	TwAddButton(bar, "SPACE/CTRL for height", NULL, NULL, NULL);
 
 	TwDefine(" Options/'Star settings' opened=false ");

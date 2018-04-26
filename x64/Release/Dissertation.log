@@ -12,9 +12,9 @@ graphicsclass.cpp(1511): warning C4244: 'argument': conversion from 'double' to 
 graphicsclass.cpp(1697): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
 graphicsclass.cpp(1700): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
   Generating code
-  79 of 1242 functions ( 6.4%) were compiled, the rest were copied from previous compilation.
+  75 of 1242 functions ( 6.0%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    8 functions had inline decision re-evaluated but remain unchanged
+    9 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
 LibNoise64.lib(modulebase.obj) : warning LNK4099: PDB 'LibNoise64.pdb' was not found with 'LibNoise64.lib(modulebase.obj)' or at 'C:\Users\Connor\git\Dissertation\x64\Release\LibNoise64.pdb'; linking object as if no debug info
 LibNoise64.lib(ridgedmulti.obj) : warning LNK4099: PDB 'LibNoise64.pdb' was not found with 'LibNoise64.lib(ridgedmulti.obj)' or at 'C:\Users\Connor\git\Dissertation\x64\Release\LibNoise64.pdb'; linking object as if no debug info
