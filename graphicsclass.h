@@ -108,9 +108,12 @@ public:
 
 	void QueueRemake();
 	void RemakeSystem();
-	void QueueRemakePlanet();
 
+	void QueueRemakePlanet();
 	void RemakePlanet();
+
+	void QueueRemakeStar();
+	void RemakeStar();
 
 	void PopModel(bool clearAll);
 	void ExportModel();
@@ -139,6 +142,7 @@ public:
 	PlanetParam planetParam;
 
 	bool remakingPlanet = false;
+	bool remakingStar = false;
 
 private:
 	bool Render(TwBar* bar);

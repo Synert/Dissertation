@@ -167,6 +167,10 @@ bool GraphicsClass::Render(TwBar* bar)
 	{
 		RemakePlanet();
 	}
+	if (remakingStar)
+	{
+		RemakeStar();
+	}
 
 	// Clear the buffers to begin the scene.
 
@@ -1701,6 +1705,76 @@ void GraphicsClass::RemakeSystem()
 	}
 }
 
+void GraphicsClass::RemakeStar()
+{
+	m_hiresMap->Shutdown();
+
+	for each(Planet* planet in m_planets)
+	{
+		if (!planet->Built())
+		{
+			remakingStar = true;
+			return;
+		}
+	}
+
+	remakingStar = false;
+
+	for (int i = 0; i < m_planets.size(); i++)
+	{
+		XMFLOAT3 newPos = m_planets[i]->GetPosition();
+		float newSize = m_planets[i]->GetSize();
+		XMFLOAT3 newPerlin = m_planets[i]->GetPerlin();
+		XMFLOAT3 newMapPerlin = m_planets[i]->GetMapPerlin();
+		XMFLOAT4 newSky = m_planets[i]->GetUnscaledSky();
+		float newWaterHeight = m_planets[i]->GetWaterHeight();
+		float newFlatten = m_planets[i]->GetFlat();
+		float newTemperature = m_planets[i]->GetTemperature();
+		if (!m_planets[i]->Shutdown())
+		{
+			remakingStar = true;
+			return;
+		}
+		delete m_planets[i];
+
+		//remake here
+		m_planets[i] = new Planet();
+		m_planets[i]->Initialize(newPos, newSize, newPerlin, newMapPerlin, newSky, m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), starParam,
+			m_hiresMap, newWaterHeight, newFlatten, -1);
+	}
+}
+
+void GraphicsClass::QueueRemakeStar()
+{
+	remakingStar = true;
+
+	StarParam new_star;
+
+	if (!randomStar)
+	{
+		new_star = starParam;
+	}
+
+	if (m_star)
+	{
+		m_star->Shutdown();
+		delete m_star;
+	}
+
+	m_star = new Star();
+	if (randomStar)
+	{
+		new_star.pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
+		new_star.temperature = Maths::RandFloat(2000.0f, 10000.0f); //6000.0f;
+		new_star.radius = Maths::RandFloat(700000.0f, 1000000.0f); //700000.0f;
+	}
+	m_star->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), new_star);
+
+	starParam = new_star;
+
+	m_light->SetLightDiffuse(m_star->GetColor());
+}
+
 void GraphicsClass::RemakePlanet()
 {
 	if (!m_remakingPlanet->Built()) return;
@@ -1752,6 +1826,12 @@ void TW_CALL MakePlanet(void *p)
 	parent->QueueRemakePlanet();
 }
 
+void TW_CALL MakeStar(void *p)
+{
+	GraphicsClass* parent = static_cast<GraphicsClass*>(p);
+	parent->QueueRemakeStar();
+}
+
 void TW_CALL CopyStdStringToClient(std::string& destinationClientString, const std::string& sourceLibraryString)
 {
 	// Copy the content of souceString handled by the AntTweakBar library to destinationClientString handled by your application
@@ -1766,7 +1846,8 @@ void GraphicsClass::SetTweakBar(TwBar* bar)
 
 	TwAddSeparator(bar, "", NULL);
 
-	//sun settings
+	//star settings
+	TwAddButton(bar, "Remake star", MakeStar, this, " group='Star settings'");
 	TwAddVarRW(bar, "Star temp", TW_TYPE_FLOAT, &starParam.temperature, " min=1000 max=10000 group='Star settings' ");
 	TwAddVarRW(bar, "Star radius", TW_TYPE_FLOAT, &starParam.radius, " min=500000 max=1000000 group='Star settings' ");
 	TwAddVarRW(bar, "Random star", TW_TYPE_BOOLCPP, &randomStar, " group='Star settings' ");
@@ -1783,9 +1864,9 @@ void GraphicsClass::SetTweakBar(TwBar* bar)
 	TwAddVarRW(bar, "Map seed X", TW_TYPE_FLOAT, &planetParam.m_seed.x, " group='Seed' ");
 	TwAddVarRW(bar, "Map seed Y", TW_TYPE_FLOAT, &planetParam.m_seed.y, " group='Seed' ");
 	TwAddVarRW(bar, "Map seed Z", TW_TYPE_FLOAT, &planetParam.m_seed.z, " group='Seed' ");
-	TwAddVarRW(bar, "Pos X", TW_TYPE_FLOAT, &planetParam.p_position.x, " group='Position' ");
-	TwAddVarRW(bar, "Pos Y", TW_TYPE_FLOAT, &planetParam.p_position.y, " group='Position' ");
-	TwAddVarRW(bar, "Pos Z", TW_TYPE_FLOAT, &planetParam.p_position.z, " group='Position' ");
+	//TwAddVarRW(bar, "Pos X", TW_TYPE_FLOAT, &planetParam.p_position.x, " group='Position' ");
+	//TwAddVarRW(bar, "Pos Y", TW_TYPE_FLOAT, &planetParam.p_position.y, " group='Position' ");
+	//TwAddVarRW(bar, "Pos Z", TW_TYPE_FLOAT, &planetParam.p_position.z, " group='Position' ");
 	TwAddVarRW(bar, "Water height", TW_TYPE_FLOAT, &planetParam.m_waterHeight, " min=0.0 max=1.0 step=0.01 group='Planet settings' ");
 
 	TwDefine(" Options/'Position'   group='Planet settings' ");
